@@ -1,0 +1,18 @@
+arm-none-eabi-gcc 
+      -c  
+      -ggdb 
+      -Os 
+      -std=gnu89 
+      -Tstm32_flash.ld 
+      -I . 
+      -I ./FreeRTOS/Source/include 
+      -I ./FreeRTOS/Source/portable/GCC/ARM_CM3 
+      -I ./demo/include -I ./std_periph_drivers/inc 
+      -I ./CM3 
+      -D STM32F10X_HD 
+      -D USE_STDPERIPH_DRIVER 
+      -D VECT_TAB_FLASH -D GCC_ARMCM3 
+      -D inline= 
+      -D PACK_STRUCT_END=__attribute\(\(packed\)\) 
+      -D ALIGN_STRUCT_END=__attribute\(\(aligned\(4\)\)\) 
+      -mthumb -mcpu=cortex-m3 -ffunction-sections -fdata-sections  std_periph_drivers/src/stm32f10x_gpio.c -o Debug/stm32f10x_gpio.o
