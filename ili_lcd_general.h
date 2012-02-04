@@ -28,7 +28,8 @@
 extern void lcd_Initializtion(void);
 extern void lcd_SetCursor(unsigned int x,unsigned int y);
 extern unsigned int lcd_getdeviceid(void);
-void  ili9320_PutChar(unsigned int  x,unsigned int y,unsigned char c,unsigned int  charColor,unsigned int bkColor);   
+void  lcd_PutChar(unsigned int  x,unsigned int y,unsigned char c,unsigned int  charColor,unsigned int bkColor);   
+void lcd_PutString(unsigned int x, unsigned int y, unsigned char * s, unsigned int textColor, unsigned int bkColor);
 void lcd_DrawHLine(int x1, int x2, int col, int y);
 void lcd_DrawVLine(int y1, int y2, int col, int x);
 void lcd_DrawRect(int x1, int y1, int x2, int y2, int col);

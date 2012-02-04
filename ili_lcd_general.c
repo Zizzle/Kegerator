@@ -492,7 +492,7 @@ void lcd_DrawVLine(int y1, int y2, int col, int x)
     }
 }
 
-lcd_DrawRect(int x1, int y1, int x2, int y2, int col)
+void lcd_DrawRect(int x1, int y1, int x2, int y2, int col)
 {
     lcd_DrawVLine(y1, y2, col, x1);
     lcd_DrawVLine(y1, y2, col, x2);
@@ -595,35 +595,50 @@ void rt_hw_lcd_draw_raw_hline(rt_uint8_t *pixels, rt_base_t x1, rt_base_t x2, rt
 #endif
 
 #if 1
-void ili9320_PutChar(unsigned int x,unsigned int y,unsigned char c,unsigned int  charColor,unsigned int bkColor)   
+void lcd_PutChar(unsigned int x,unsigned int y,unsigned char c,unsigned int  charColor,unsigned int bkColor)   
 {   
     unsigned int  i=0;   
     unsigned int  j=0;   
-    unsigned int d = 30;
+    unsigned int d = 0;
     unsigned char tmp_char=0;   
+    write_reg(0x0003,(1<<12)|(1<<5)|(1<<4) | (0<<3) ); // set up
+                                                       // orientation
+    // printf("orientation set up\r\n");
+    
     
     for (i=0;i<16;i++)   
     {   
-        tmp_char=ascii_8x16[((c-0x20)*16)+i];   
+        
+        lcd_SetCursor(x,y+i); //move down each line    
+        tmp_char=ascii_8x16[((c-0x20)*16)+i];   //get the char from lookup
         for (j=0;j<8;j++)   
         {   
-            if ( (tmp_char >> 7-j) & 0x01 == 0x01)   
+            if ( (tmp_char >> 7-j) & 0x01 == 0x01) //text pixel
             {   
-                 lcd_SetCursor(x+j,y+i); // ×Ö·ûÑÕÉ«   
-                 delay(d);
-                 rw_data_prepare();
-                 delay(d);
-                 write_data(charColor);
-            }   
-            else   
-            {   
-                lcd_SetCursor(x+j,y+i); // ±³¾°ÑÕÉ«
-                delay(d);
                 rw_data_prepare();
-                delay(d);
+                write_data(charColor);
+                //printf("ascii pixel created\r\n");
+            }   
+            else   //background pixel
+            {   
+                rw_data_prepare();
                 write_data(bkColor);
+                //printf("background pixel created\r\n");
             }   
         }   
     }   
 }   
 #endif 
+void lcd_PutString(unsigned int x, unsigned int y, unsigned char * s, unsigned int textColor, unsigned int bkColor)
+{
+    unsigned char * temp = s;
+    unsigned int cnt = 0;
+    //printf("%c\r\n", *temp);
+    while (*temp != '\0')
+    {
+        lcd_PutChar(x+cnt, y, *temp, textColor, bkColor);
+        cnt+=8;
+        temp++;
+        //  printf("%c\r\n", *temp);
+    }
+}

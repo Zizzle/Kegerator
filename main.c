@@ -220,9 +220,10 @@ int main( void )
   
     
     xSerialPortInitMinimal( 9600, 255 );       
-    vSerialPutString(NULL, "helloWorld", 15);   
-    //  lcd_Initializtion();          
-  
+    
+    
+    // vSerialPutString(NULL, "helloWorld", 15);   
+        
     /* Start the standard demo tasks. */
     vCreateBlockTimeTasks();
     vStartSemaphoreTasks( mainSEM_TEST_PRIORITY );
@@ -232,8 +233,19 @@ int main( void )
    
 
 	/* Start the tasks defined within this file/specific to this demo. */
-    xTaskCreate( vCheckTask, ( signed portCHAR * ) "Check", mainCHECK_TASK_STACK_SIZE, NULL, mainCHECK_TASK_PRIORITY, NULL );
-    xTaskCreate( vLCDTask, ( signed portCHAR * ) "LCD", mainLCD_TASK_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL );
+    xTaskCreate( vCheckTask, 
+                 ( signed portCHAR * ) "Check", 
+                 mainCHECK_TASK_STACK_SIZE, 
+                 NULL, 
+                 mainCHECK_TASK_PRIORITY, 
+                 NULL );
+
+    xTaskCreate( vLCDTask, 
+                 ( signed portCHAR * ) "LCD", 
+                 mainLCD_TASK_STACK_SIZE, 
+                 NULL, 
+                 tskIDLE_PRIORITY, 
+                 NULL );
     
 	/* The suicide tasks must be created last as they need to know how many
 	tasks were running prior to their creation in order to ascertain whether
@@ -254,6 +266,8 @@ int main( void )
 
 void vLCDTask( void *pvParameters )
 {
+    char Text[15] = "Hello World";
+    Text[11] = '\0';
     xLCDMessage xMessage;
 
 	/* Initialise the LCD and display a startup message. */
@@ -269,17 +283,16 @@ void vLCDTask( void *pvParameters )
         /* Wait for a message to arrive that requires displaying. */
         while( xQueueReceive( xLCDQueue, &xMessage, portMAX_DELAY ) != pdPASS );
         
-       /* Display the message.  Print each message to a different position. */
+        /* Display the message.  Print each message to a different position. */
         printf( ( portCHAR const * ) xMessage.pcMessage );
 #endif
         
+        
+        //vSerialPutString(NULL, "Test\r\n", 0);
+        
+        
+        lcd_clear(cols[ii]);
        
-       //vSerialPutString(NULL, "Test\r\n", 0);
-       
-       
-       lcd_clear(cols[ii]);
-       ii++;
-       if (ii >= 6) ii = 0;
        lcd_DrawRect(10, 10, 230, 310);
 
        lcd_DrawRect(20, 30, 70, 80, Black);
@@ -291,9 +304,13 @@ void vLCDTask( void *pvParameters )
        lcd_DrawRect(120, 80, 170, 130, Black);
        lcd_DrawRect(170, 80, 220, 130, Black);
 
-       //ili9320_PutChar(120, 130, "f" , Red, Blue);
        
-       vTaskDelay( 300 );
+       lcd_PutString(30, 50, Text, White, Black);
+       lcd_PutString(30, 100, "This is a TEST\0", Black, cols[ii]);
+       
+       ii++;
+       if (ii >= 6) ii = 0;       
+       vTaskDelay( 200 );
    }   
    
 }

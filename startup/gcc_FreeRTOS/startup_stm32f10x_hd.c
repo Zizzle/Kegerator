@@ -34,6 +34,7 @@
 #define WEAK __attribute__ ((weak))
 
 /* Includes ----------------------------------------------------------------------*/
+#include "stm32f10x.h"
 
 void WEAK Reset_Handler(void);
 void WEAK NMI_Handler(void);
@@ -360,7 +361,16 @@ void Reset_Handler(void)
 
 void Default_Handler(void)
 {
+GPIO_InitTypeDef GPIO_InitStructure;
+    //set D2
+	GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_7;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init( GPIOC, &GPIO_InitStructure );
+        GPIO_Write( GPIOD, 1 );
+
   /* Go into an infinite loop. */
+
   while (1)
   {
   }
