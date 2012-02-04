@@ -172,12 +172,14 @@ $(OUTDIR)/startup_stm32f10x.o : startup_stm32f10x.c Makefile
 	$(CC) -c $(CFLAGS) -O1 startup_stm32f10x.c -o $(OUTDIR)/startup_stm32f10x.o
 
 clean :
-	-rm $(OBJS)
-	-rm $(OUTDIR)/startup_stm32f10x.o
-	-rm $(PROJECT_NAME).axf
-	-rm $(PROJECT_NAME)_SymbolTable.txt
-	-rm $(PROJECT_NAME)_MemoryListingSummary.txt
-	rm $(PROJECT_NAME)_MemoryListingDetails.txt
+	-rm -f $(OBJS)
+	-rm -f $(OUTDIR)/startup_stm32f10x.o
+	-rm -f $(PROJECT_NAME).axf
+	-rm -f $(PROJECT_NAME).bin
+	-rm -f $(PROJECT_NAME).map
+	-rm -f $(PROJECT_NAME)_SymbolTable.txt
+	-rm -f $(PROJECT_NAME)_MemoryListingSummary.txt
+	rm -f $(PROJECT_NAME)_MemoryListingDetails.txt
 
 log : $(PROJECT_NAME).axf
 	$(NM) -n $(PROJECT_NAME).axf > $(PROJECT_NAME)_SymbolTable.txt
