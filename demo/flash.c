@@ -106,7 +106,7 @@ void vStartLEDFlashTasks( unsigned portBASE_TYPE uxPriority )
 static portTASK_FUNCTION( vLEDFlashTask, pvParameters )
 {
     portTickType xFlashRate, xLastFlashTime;
-    unsigned portBASE_TYPE uxLED;
+    unsigned portBASE_TYPE uxLED = 6;
     
     /* The parameters are not used. */
     ( void ) pvParameters;
@@ -115,10 +115,12 @@ static portTASK_FUNCTION( vLEDFlashTask, pvParameters )
     portENTER_CRITICAL();
     {
         /* See which of the eight LED's we should use. */
-        uxLED = uxFlashTaskNumber;
-        
+        uxLED == uxFlashTaskNumber;
+       
+       
+
         /* Update so the next task uses the next LED. */
-        uxFlashTaskNumber++;
+        uxFlashTaskNumber++ ;
     }
     portEXIT_CRITICAL();
     

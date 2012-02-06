@@ -65,7 +65,7 @@ CSTANDARD = gnu89
 
 
 # Compiler flags definition.
-CFLAGS=-g$(DEBUG) \
+CFLAGS=-g$(DEBUG)\
 		-O$(OPT) \
 		-std=$(CSTANDARD) \
 		-T$(LDSCRIPT) \
@@ -82,10 +82,9 @@ CFLAGS=-g$(DEBUG) \
 		-D inline= \
 		-D PACK_STRUCT_END=__attribute\(\(packed\)\) \
 		-D ALIGN_STRUCT_END=__attribute\(\(aligned\(4\)\)\) \
-		-mthumb \
-		-mcpu=cortex-m3 \
+		-mthumb -mcpu=cortex-m3 \
 		-ffunction-sections \
-		-fdata-sections \
+		-fdata-sections 
 
 
 # Source files
@@ -200,3 +199,11 @@ gccversion :
 	@$(CC) --version
 
 $(shell mkdir $(OUTDIR) 2>NUL)
+
+install0: all
+
+	stm32loader.py -ew -p /dev/ttyUSB0 RTOSDemo.bin
+
+install1: all 
+
+	stm32loader.py -ew -p /dev/ttyUSB1 RTOSDemo.bin

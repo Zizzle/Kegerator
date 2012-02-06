@@ -194,6 +194,8 @@ extern void vSetupTimerTest( void );
  */
 int putChar( int ch );
 
+void vStackOverflowCheckTask( void *pvParameters );
+
 /*-----------------------------------------------------------*/
 
 /* The queue used to send messages to the LCD task. */
@@ -205,6 +207,10 @@ volatile int ITM_RxBuffer;
 
 /*-----------------------------------------------------------*/
 
+static const char * pcTextForTask1 = "Task 1 is running\r\n";
+static const char * pcTextForTask2 = "Task 2 is running\r\n";
+
+ 
 int main( void )
 {
 #ifdef DEBUG
@@ -237,16 +243,31 @@ int main( void )
                  ( signed portCHAR * ) "Check", 
                  mainCHECK_TASK_STACK_SIZE, 
                  NULL, 
-                 mainCHECK_TASK_PRIORITY, 
+                 tskIDLE_PRIORITY+1, 
                  NULL );
 
     xTaskCreate( vLCDTask, 
                  ( signed portCHAR * ) "LCD", 
                  mainLCD_TASK_STACK_SIZE, 
                  NULL, 
-                 tskIDLE_PRIORITY, 
+                 tskIDLE_PRIORITY+1, 
                  NULL );
     
+    xTaskCreate( vStackOverflowCheckTask, 
+                 ( signed portCHAR * ) "Stack Over1", 
+                 configMINIMAL_STACK_SIZE, 
+                 (void*)pcTextForTask1, 
+                 tskIDLE_PRIORITY+1,
+                 NULL );
+
+    xTaskCreate( vStackOverflowCheckTask, 
+                 ( signed portCHAR * ) "Stack Over2", 
+                 configMINIMAL_STACK_SIZE, 
+                 (void*)pcTextForTask2, 
+                 tskIDLE_PRIORITY,
+                 NULL );
+
+
 	/* The suicide tasks must be created last as they need to know how many
 	tasks were running prior to their creation in order to ascertain whether
 	or not the correct/expected number of tasks are running at any given time. */
@@ -266,51 +287,44 @@ int main( void )
 
 void vLCDTask( void *pvParameters )
 {
-    char Text[15] = "Hello World";
-    Text[11] = '\0';
-    xLCDMessage xMessage;
-
-	/* Initialise the LCD and display a startup message. */
-    lcd_Initializtion();        
-        
+   
+    char buf[40]; // for task information. 
+    buf[40] = '\0';
     int ii = 0;
     int cols[] = {Red, Grey, Green, Blue, Magenta, Green, Cyan};
+    portTickType xLastExecutionTime = xTaskGetTickCount();
+
+    xLCDMessage xMessage;
     
+	/* Initialise the LCD and display a startup message. */
+    lcd_Initializtion();        
+   
     
     for( ;; )
     {
+
+        
+        vTaskDelayUntil( &xLastExecutionTime, 200/portTICK_RATE_MS ); 
 #if 0
         /* Wait for a message to arrive that requires displaying. */
-        while( xQueueReceive( xLCDQueue, &xMessage, portMAX_DELAY ) != pdPASS );
-        
-        /* Display the message.  Print each message to a different position. */
-        printf( ( portCHAR const * ) xMessage.pcMessage );
+        if( xQueueReceive( xLCDQueue, &xMessage, portMAX_DELAY ) != pdPASS )
+            
+            /* Display the message.  Print each message to a different position. */
+            printf( ( portCHAR const * ) xMessage.pcMessage );
+//        lcd_PutString(10, 200, xMessage.pcMessage, Black, cols[ii]);
 #endif
         
         
-        //vSerialPutString(NULL, "Test\r\n", 0);
-        
-        
-        lcd_clear(cols[ii]);
-       
-       lcd_DrawRect(10, 10, 230, 310);
 
-       lcd_DrawRect(20, 30, 70, 80, Black);
-       lcd_DrawRect(70, 30, 120, 80, Black);
-       lcd_DrawRect(120, 30, 170, 80, Black);
-       lcd_DrawRect(170, 30, 220, 80, Black);
-       lcd_DrawRect(20, 80, 70, 130, Black);
-       lcd_DrawRect(70, 80, 120, 130, Black);
-       lcd_DrawRect(120, 80, 170, 130, Black);
-       lcd_DrawRect(170, 80, 220, 130, Black);
-
-       
-       lcd_PutString(30, 50, Text, White, Black);
-       lcd_PutString(30, 100, "This is a TEST\0", Black, cols[ii]);
-       
-       ii++;
-       if (ii >= 6) ii = 0;       
-       vTaskDelay( 200 );
+//        lcd_DrawRect(170, 80, 220, 130, Black);
+        
+        printf("LCD Task is running\r\n");
+        lcd_PutString(30, 100, "This is a TEST\0", Black, cols[ii]);
+        lcd_DrawCircle(100, 100, 30, Black);
+        // lcd_PutString(10, 200, buf, White, Black);
+        ii++;
+        if (ii >= 6) ii = 0;       
+        taskYIELD();
    }   
    
 }
@@ -322,16 +336,18 @@ static void vCheckTask( void *pvParameters )
     portTickType xLastExecutionTime;
     xLCDMessage xMessage;
     static signed portCHAR cPassMessage[ mainMAX_MSG_LEN ];
-   extern unsigned portSHORT usMaxJitter;
-
+    extern unsigned portSHORT usMaxJitter;
     xLastExecutionTime = xTaskGetTickCount();
+    
     xMessage.pcMessage = cPassMessage;
-
+    
     for( ;; )
     {
-        /* Perform this check every mainCHECK_DELAY milliseconds. */
-        vTaskDelayUntil( &xLastExecutionTime, mainCHECK_DELAY );
+
+        /* Perform this check every 5 seconds. */
         
+        vTaskDelayUntil( &xLastExecutionTime, 5000/portTICK_RATE_MS );
+        //printf("Check Task is running\r\n");
         /* Has an error been found in any task? */
         
         if( xAreBlockTimeTestTasksStillRunning() != pdTRUE )
@@ -356,12 +372,13 @@ static void vCheckTask( void *pvParameters )
         }
         else
         {
-            sprintf( ( portCHAR * ) cPassMessage, "PASS [%uns]\n", ( ( unsigned portLONG ) usMaxJitter ) * mainNS_PER_CLOCK );
+            sprintf( ( portCHAR * ) cPassMessage, "PASS [%uns]\n\0", ( ( unsigned portLONG ) usMaxJitter ) * mainNS_PER_CLOCK );
         }
         
         /* Send the message to the LCD gatekeeper for display. */
         xQueueSend( xLCDQueue, &xMessage, portMAX_DELAY );
 	}
+   
 }
 /*-----------------------------------------------------------*/
 
@@ -484,15 +501,37 @@ static unsigned portCHAR ucLine = 0;
 
 void vApplicationStackOverflowHook( xTaskHandle *pxTask, signed portCHAR *pcTaskName )
 {
-GPIO_InitTypeDef GPIO_InitStructure;
-
-	GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_7;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init( GPIOC, &GPIO_InitStructure );
-        GPIO_Write( GPIOD, 1 );
-	for( ;; );
+    GPIO_InitTypeDef GPIO_InitStructure;
+    GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_7;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init( GPIOC, &GPIO_InitStructure );
+    GPIO_Write( GPIOC, 1 );
+    
+    for( ;; );
 }
+
+
+void vStackOverflowCheckTask( void *pvParameters ) 
+{
+    char * pcTaskName;
+    pcTaskName = (char*) pvParameters;
+    portTickType xLastExecutionTime = xTaskGetTickCount();    
+    static unsigned char x = 0; 
+   
+    for (;;)
+    {
+        vTaskDelayUntil( &xLastExecutionTime, 5000/portTICK_RATE_MS );
+        vParTestToggleLED((unsigned portBASE_TYPE)13);
+        
+        printf(pcTaskName);
+        taskYIELD();
+    }
+}
+
+
+   
+
 
 #ifdef DEBUG
 
@@ -506,3 +545,5 @@ void assert_failed( unsigned portCHAR* pcFile, unsigned portLONG ulLine )
 }
 
 #endif
+
+
