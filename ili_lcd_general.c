@@ -18,27 +18,32 @@
 #endif
 
 #define rw_data_prepare()               write_cmd(34)
-
+#define Delay(x)  vTaskDelay( (x)/portTICK_RATE_MS )
 
 /********* control ***********/
 #include "stm32f10x.h"
-//#include "board.h"
 
-/* LCD is connected to the FSMC_Bank1_NOR/SRAM2 and NE2 is used as ship select signal */
+
+/* LCD is connected to the FSMC_Bank1_NOR/SRAM2 
+   and NE2 is used as ship select signal */
 /* RS <==> A2 */
-#define LCD_REG              (*((volatile unsigned short *) 0x60000000)) /* RS = 0 */
-#define LCD_RAM              (*((volatile unsigned short *) 0x60020000)) /* RS = 1 */
+#define LCD_REG (*((volatile unsigned short *) 0x60000000)) /* RS = 0 */
+#define LCD_RAM (*((volatile unsigned short *) 0x60020000)) /* RS = 1 */
 
 static void display_ON(void);
 static void display_OFF(void);
 static void gamma_SET(void);
+
+//---------------------------------------------------------------------/
+//                       FMSC Setup
+//---------------------------------------------------------------------/
 
 static void LCD_FSMCConfig(void)
 {
     FSMC_NORSRAMInitTypeDef  FSMC_NORSRAMInitStructure;
     FSMC_NORSRAMTimingInitTypeDef  p;
 
-    /*-- FSMC Configuration ------------------------------------------------------*/
+    /*-- FSMC Configuration ----------------------------------------------*/
     p.FSMC_AddressSetupTime = 2;             /* 地址建立时间  */
     p.FSMC_AddressHoldTime = 1;              /* 地址保持时间  */
     p.FSMC_DataSetupTime = 3;                /* 数据建立时间  */
@@ -74,17 +79,9 @@ static void LCD_FSMCConfig(void)
     FSMC_NORSRAMCmd(FSMC_Bank1_NORSRAM1, ENABLE);
 }
 
-static void delay(int cnt)
-{
-    volatile unsigned int dl;
-    while(cnt--)
-    {
-        for(dl=0; dl<100; dl++)asm("nop");
-    }
-}
-
-
-
+//---------------------------------------------------------------------/
+//                       Hardware (I/O) Setup
+//---------------------------------------------------------------------/
 static void lcd_port_init(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
@@ -138,9 +135,6 @@ static void lcd_port_init(void)
     GPIO_Init(GPIOD,&GPIO_InitStructure);
 
 
-//    GPIO_WriteBit(GPIOE, GPIO_Pin_6, Bit_SET);
-    
-    //lcd_rst();	 
     GPIO_ResetBits(GPIOE, GPIO_Pin_1);
     vTaskDelay(10/portTICK_RATE_MS);					   
     GPIO_SetBits(GPIOE, GPIO_Pin_1 );		 //	 
@@ -149,6 +143,9 @@ static void lcd_port_init(void)
     LCD_FSMCConfig();
 }
 
+//---------------------------------------------------------------------/
+//                       Static Functions
+//---------------------------------------------------------------------/
 lcd_inline void write_cmd(unsigned short cmd)
 {
     LCD_REG = cmd;
@@ -207,7 +204,7 @@ void lcd_SetCursor(unsigned int x,unsigned int y)
     write_reg(33,y);    /* 0-319 */
 }
 
-/* 读取指定地址的GRAM */
+
 unsigned short lcd_read_gram(unsigned int x,unsigned int y)
 {
     unsigned short temp;
@@ -238,38 +235,18 @@ void lcd_data_bus_test(void)
 
     /* [5:4]-ID~ID0 [3]-AM-1垂直-0水平 */
     write_reg(0x0003,(1<<12)|(1<<5)|(1<<4) | (0<<3) );
-    //printf("A\r\n");
 
-    /* wirte */
+    /* Write Alternating Bit Values */
     lcd_SetCursor(0,0);
-    //   printf("B\r\n");
     rw_data_prepare();
-    //  printf("C\r\n");
     write_data(0x5555);
-    //  printf("D\r\n");
-      write_data(0xAAAA);
-    //  printf("E\r\n");
+    write_data(0xAAAA);
+  
 
-    /* read */
+    /* Read it back and check*/
     lcd_SetCursor(0,0);
-    if (
-        (deviceid ==0x9325)
-        || (deviceid ==0x9328)
-        || (deviceid ==0x9320)
-    )
-    {
-        temp1 = BGR2RGB( lcd_read_gram(0,0) );
-        temp2 = BGR2RGB( lcd_read_gram(1,0) );
-    }
-    else if( deviceid ==0x4532 )
-    {
-        //printf("F\r\n");
-        temp1 = lcd_read_gram(0,0);
-        temp2 = lcd_read_gram(1,0);
-//        temp1 = BGR2RGB( lcd_read_gram(0,0) );
-//        temp2 = BGR2RGB( lcd_read_gram(1,0) );
-    }
-
+    temp1 = lcd_read_gram(0,0);
+    temp2 = lcd_read_gram(1,0);
     if( (temp1 == 0x5555) && (temp2 == 0xAAAA) )
     {
         printf("Data bus test pass!\r\n");
@@ -282,7 +259,7 @@ void lcd_data_bus_test(void)
 
 void lcd_gram_test(void)
 {
-    unsigned short temp;
+    unsigned short temp; //Temp value to put in GRAM
     unsigned int test_x;
     unsigned int test_y;
 
@@ -290,43 +267,20 @@ void lcd_gram_test(void)
 
     /* write */
     temp=0;
-    /* [5:4]-ID~ID0 [3]-AM-1垂直-0水平 */
+    
     write_reg(0x0003,(1<<12)|(1<<5)|(1<<4) | (0<<3) );
     lcd_SetCursor(0,0);
     rw_data_prepare();
-    for(test_y=0; test_y<76800; test_y++)
+    for(test_y=0; test_y<76800; test_y++) //test 320*240 Memory locations
     {
-        write_data(temp);
+        write_data(temp); //put temp in GRAM
         temp++;
     }
 
-    /* read */
+    /* Read it back from GRAM and Test */
     temp=0;
-
-    if (
-        (deviceid ==0x9320)
-        || (deviceid ==0x9325)
-        || (deviceid ==0x9328)
-    )
+    for(test_y=0; test_y<320; test_y++)
     {
-        for(test_y=0; test_y<320; test_y++)
-        {
-            for(test_x=0; test_x<240; test_x++)
-            {
-                if( BGR2RGB( lcd_read_gram(test_x,test_y) ) != temp++)
-                {
-                    printf("  LCD GRAM ERR!!");
-                    
-                    while(1);
-                }
-            }
-        }
-        printf("GRAM TEST PASS!\r\n");
-    }
-    else if( deviceid ==0x4532 )
-    {
-        for(test_y=0; test_y<320; test_y++)
-        {
             for(test_x=0; test_x<240; test_x++)
             {
                 if(  lcd_read_gram(test_x,test_y) != temp++)
@@ -335,31 +289,22 @@ void lcd_gram_test(void)
                     // while(1);
                 }
             }
-        }
-        printf("TEST PASS!\r\n");
     }
+    printf("TEST PASS!\r\n");
 }
 
-
-//#define LCD_WR_CMD(a,b) write_reg(a,b)
-
-//void Delay(__IO uint32_t nCount)
-//{
-//  for(; nCount != 0; nCount--);
-//}
-#define Delay(x)  vTaskDelay( (x)/portTICK_RATE_MS )
-
-
+//---------------------------------------------------------------------/
+//                       REGISTER SET UP
+//---------------------------------------------------------------------/
 static void power_SET(void)
 {
+    //Toggle Reset Pin
     GPIO_ResetBits(GPIOE, GPIO_Pin_1);
     vTaskDelay(10/portTICK_RATE_MS);
     GPIO_SetBits(GPIOE, GPIO_Pin_1 );		 //	 
     vTaskDelay(10/portTICK_RATE_MS);    
     
    
-
-//############# void Power_Set(void) ################//
     write_reg(0x0000,0x0001); //Start Oscillation
     Delay(10);
 
@@ -428,15 +373,17 @@ static void display_OFF(void)
     Delay(10);
 }
 
+
+//---------------------------------------------------------------------/
+//                      Interface Functions 
+//---------------------------------------------------------------------/
+
 void lcd_Initializtion(void)
 {
-    lcd_port_init();
+    lcd_port_init(); //initialise IO Registers
 
-    deviceid = read_reg(0x00);
-    
-    //printf("Device: %x\r\n", deviceid);
-    
-    /* deviceid check */
+    /* deviceid check */    
+    deviceid = read_reg(0x00); 
     if(deviceid != 0x4532)
     {
         printf("Invalid LCD ID:%08X\r\n",deviceid);
@@ -447,22 +394,30 @@ void lcd_Initializtion(void)
     {
         printf("\r\nLCD Device ID : %04X ",deviceid);
     }
-
-        
-    power_SET(); //Set up the power Registers
-
-    gamma_SET(); //Set up the Gamma Registers
     
+    //SET UP//
+    power_SET(); //Set up the power Registers
+    gamma_SET(); //Set up the Gamma Registers
+
+    //TEST//
     display_OFF(); //Switch off the display for tests
     lcd_data_bus_test();
     lcd_gram_test(); 
     display_ON();  //Switch on the display
-        
-    lcd_clear( White );
-    lcd_clear( Blue );
-    lcd_clear( Red  );
-    lcd_clear( White );
 
+    //Eye Candy//
+    Delay(10);      
+    lcd_clear( Red );
+    Delay(100);      
+    lcd_clear( Yellow );
+    Delay(100);
+    lcd_clear( Cyan );
+    Delay(100);
+    lcd_clear( Green );
+    Delay(100);
+    lcd_clear( Black );
+    Delay(100);
+    lcd_clear( White );
   
 }
 
@@ -470,12 +425,10 @@ void lcd_Initializtion(void)
 void lcd_DrawHLine(int x1, int x2, int col, int y ) 
 {
     uint16_t ptr;
-    
-       
-    /* [5:4]-ID~ID0 [3]-AM-1垂直-0水平 */
+    //Set up registers for horizontal scanning
     write_reg(0x0003,(1<<12)|(1<<5)|(1<<4) | (0<<3) );
     
-    lcd_SetCursor(x1, y);
+    lcd_SetCursor(x1, y); //start position
     rw_data_prepare(); /* Prepare to write GRAM */
     while (x1 <= x2)
     {
@@ -489,14 +442,12 @@ void lcd_DrawHLine(int x1, int x2, int col, int y )
 
 void lcd_DrawVLine(int y1, int y2, int col, int x)
 {
- unsigned short p;
-
-    /* get color pixel */
-   
-    /* [5:4]-ID~ID0 [3]-AM-1垂直-0水平 */
+    unsigned short p;
+    
+    //Set up registers for vertical scanning 
     write_reg(0x0003,(1<<12)|(1<<5)|(0<<4) | (1<<3) );
-
-    lcd_SetCursor(x, y1);
+    
+    lcd_SetCursor(x, y1); //start position
     rw_data_prepare(); /* Prepare to write GRAM */
     while (y1 <= y2)
     {
@@ -514,12 +465,12 @@ void lcd_DrawRect(int x1, int y1, int x2, int y2, int col)
 }
 
 void lcd_DrawPixel(int x, int y, int col){
-    vTaskSuspendAll();
+   
     write_reg(0x0003,(1<<12)|(1<<5)|(1<<4) | (0<<3) ); // set up
     rw_data_prepare(); /* Prepare to write GRAM */
     lcd_SetCursor(x, y);
     write_data(col);
-    xTaskResumeAll();
+   
 }
 
 void lcd_PutChar(unsigned int x,unsigned int y,unsigned char c,unsigned int  charColor,unsigned int bkColor)   
@@ -530,12 +481,8 @@ void lcd_PutChar(unsigned int x,unsigned int y,unsigned char c,unsigned int  cha
     unsigned char tmp_char=0;   
     write_reg(0x0003,(1<<12)|(1<<5)|(1<<4) | (0<<3) ); // set up
                                                        // orientation
-    // printf("orientation set up\r\n");
-    
-    
     for (i=0;i<16;i++)   
     {   
-        
         lcd_SetCursor(x,y+i); //move down each line    
         tmp_char=ascii_8x16[((c-0x20)*16)+i];   //get the char from lookup
         for (j=0;j<8;j++)   
@@ -544,13 +491,11 @@ void lcd_PutChar(unsigned int x,unsigned int y,unsigned char c,unsigned int  cha
             {   
                 rw_data_prepare();
                 write_data(charColor);
-                //printf("ascii pixel created\r\n");
             }   
             else   //background pixel
             {   
                 rw_data_prepare();
                 write_data(bkColor);
-                //printf("background pixel created\r\n");
             }   
         }   
     }   
@@ -567,7 +512,6 @@ void lcd_PutString(unsigned int x, unsigned int y, unsigned char * s, unsigned i
         lcd_PutChar(x+cnt, y, *temp, textColor, bkColor);
         cnt+=8;
         temp++;
-
     }
 }
 
