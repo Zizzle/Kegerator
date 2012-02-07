@@ -254,14 +254,14 @@ int main( void )
                  tskIDLE_PRIORITY+6, 
                  NULL );
     
-    /* xTaskCreate( vStackOverflowCheckTask, 
+     xTaskCreate( vStackOverflowCheckTask, 
                  ( signed portCHAR * ) "Stack Over1", 
                  configMINIMAL_STACK_SIZE + 500, 
                  NULL, 
-                 tskIDLE_PRIORITY + 1,
+                 tskIDLE_PRIORITY + 2,
                  NULL );
 
-    */
+    
     xTaskCreate( vTouchTask, 
                  ( signed portCHAR * ) "touch", 
                  configMINIMAL_STACK_SIZE + 1000, 
@@ -303,7 +303,7 @@ void vLCDTask( void *pvParameters )
     TP_PosData rxStruct;
     portBASE_TYPE xStatus;
 //    char txBuf[50];
-
+    
     /* Initialise the LCD and display a startup message. */
     vTaskSuspendAll();
     lcd_Initializtion();        
@@ -316,7 +316,6 @@ void vLCDTask( void *pvParameters )
         if ( uxQueueMessagesWaiting ( xTPQueue ) > 1)
         {
             xStatus = xQueueReceive( xTPQueue, &rxStruct, 0);
-            printf("LCD Task is running\r\n");
             // lcd_PutString(30, 100, "This is a TEST\0", Black, cols[ii]);
         }
         else         
@@ -365,19 +364,19 @@ void vTerminalMessagesTask( void *pvParameters )
 
 static void prvSetupHardware( void )
 {
-	/* Start with the clocks in their expected state. */
-	RCC_DeInit();
-
-	/* Enable HSE (high speed external clock). */
-	RCC_HSEConfig( RCC_HSE_ON );
-
-	/* Wait till HSE is ready. */
-	while( RCC_GetFlagStatus( RCC_FLAG_HSERDY ) == RESET )
-	{
-	}
-
-	/* 2 wait states required on the flash. */
-	*( ( unsigned portLONG * ) 0x40022000 ) = 0x02;
+    /* Start with the clocks in their expected state. */
+    RCC_DeInit();
+    
+    /* Enable HSE (high speed external clock). */
+    RCC_HSEConfig( RCC_HSE_ON );
+    
+    /* Wait till HSE is ready. */
+    while( RCC_GetFlagStatus( RCC_FLAG_HSERDY ) == RESET )
+    {
+    }
+    
+    /* 2 wait states required on the flash. */
+    *( ( unsigned portLONG * ) 0x40022000 ) = 0x02;
 
 	/* HCLK = SYSCLK */
 	RCC_HCLKConfig( RCC_SYSCLK_Div1 );
@@ -429,7 +428,7 @@ static void prvSetupHardware( void )
 	/* Configure HCLK clock as SysTick clock source. */
 	SysTick_CLKSourceConfig( SysTick_CLKSource_HCLK );
 
-        // vLEDInit();
+         vLEDInit();
 
 }
 /*-----------------------------------------------------------*/
@@ -498,11 +497,11 @@ void vTouchTask( void *pvParameters )
         
         if ((x|y)!=0)
         {
-            xStatus = xQueueSendToBack( xTPQueue, &TP_PD, 0);  
+            xStatus = xQueueSendToBack( xTPQueue, &TP_PD, xTicksToWait);  
             //sprintf(txBuf, "Tuuch HWM = %d\r\n", uxTaskGetStackHighWaterMark(NULL));
             //xStatus = xQueueSendToBack( xMessageQueue, &txBuf, 0);  
       
-            printf("Touchchecked %d, %d\r\n", TP_PD.uiX, TP_PD.uiY);
+//            printf("Touchchecked %d, %d\r\n", TP_PD.uiX, TP_PD.uiY);
         }
 
         taskYIELD();

@@ -29,6 +29,10 @@
 #define LCD_REG              (*((volatile unsigned short *) 0x60000000)) /* RS = 0 */
 #define LCD_RAM              (*((volatile unsigned short *) 0x60020000)) /* RS = 1 */
 
+static void display_ON(void);
+static void display_OFF(void);
+static void gamma_SET(void);
+
 static void LCD_FSMCConfig(void)
 {
     FSMC_NORSRAMInitTypeDef  FSMC_NORSRAMInitStructure;
@@ -337,80 +341,91 @@ void lcd_gram_test(void)
 }
 
 
-#define LCD_WR_CMD(a,b) write_reg(a,b)
+//#define LCD_WR_CMD(a,b) write_reg(a,b)
 
-void Delay(__IO uint32_t nCount)
-{
-  for(; nCount != 0; nCount--);
-}
+//void Delay(__IO uint32_t nCount)
+//{
+//  for(; nCount != 0; nCount--);
+//}
 #define Delay(x)  vTaskDelay( (x)/portTICK_RATE_MS )
 
-void LCD_Init1(void)
-{
 
+static void power_SET(void)
+{
     GPIO_ResetBits(GPIOE, GPIO_Pin_1);
     vTaskDelay(10/portTICK_RATE_MS);
     GPIO_SetBits(GPIOE, GPIO_Pin_1 );		 //	 
     vTaskDelay(10/portTICK_RATE_MS);    
-
+    
    
-  			 
 
 //############# void Power_Set(void) ################//
-    LCD_WR_CMD(0x0000,0x0001);
+    write_reg(0x0000,0x0001); //Start Oscillation
     Delay(10);
 
-    LCD_WR_CMD(0x0015,0x0030);
-    LCD_WR_CMD(0x0011,0x0040);
-    LCD_WR_CMD(0x0010,0x1628);
-    LCD_WR_CMD(0x0012,0x0000);
-    LCD_WR_CMD(0x0013,0x104d);
+    write_reg(0x0015,0x0030);// internal voltage reg at 0.65*Vci
+    write_reg(0x0011,0x0040);//Power Control Setup Reg 1 
+                              //Step-Up Circuit 1,2 = Fosc/128,
+                              // VciOut - 1 * Vci
+    write_reg(0x0010,0x1628);//Power Control Setup Reg 1
+    write_reg(0x0012,0x0000);//Power Control Setup Reg 3
+    write_reg(0x0013,0x104d);//Power Control Setup Reg 4
     Delay(10);
-    LCD_WR_CMD(0x0012,0x0010);
+    write_reg(0x0012,0x0010);//VREGout = 1.47
     Delay(10);
-    LCD_WR_CMD(0x0010,0x2620);
-    LCD_WR_CMD(0x0013,0x344d); //304d
-    Delay(10);
-    
-    LCD_WR_CMD(0x0001,0x0100);
-    LCD_WR_CMD(0x0002,0x0300);
-    LCD_WR_CMD(0x0003,0x1030);
-    LCD_WR_CMD(0x0008,0x0604);
-    LCD_WR_CMD(0x0009,0x0000);
-    LCD_WR_CMD(0x000A,0x0008);
-    
-    LCD_WR_CMD(0x0041,0x0002);
-    LCD_WR_CMD(0x0060,0x2700);
-    LCD_WR_CMD(0x0061,0x0001);
-    LCD_WR_CMD(0x0090,0x0182);
-    LCD_WR_CMD(0x0093,0x0001);
-    LCD_WR_CMD(0x00a3,0x0010);
+    write_reg(0x0010,0x2620);//Power Control Setup Reg1
+    write_reg(0x0013,0x344d); //304d
     Delay(10);
     
-//################# void Gamma_Set(void) ####################//
-    LCD_WR_CMD(0x30,0x0000);		
-    LCD_WR_CMD(0x31,0x0502);		
-    LCD_WR_CMD(0x32,0x0307);		
-    LCD_WR_CMD(0x33,0x0305);		
-    LCD_WR_CMD(0x34,0x0004);		
-    LCD_WR_CMD(0x35,0x0402);		
-    LCD_WR_CMD(0x36,0x0707);		
-    LCD_WR_CMD(0x37,0x0503);		
-    LCD_WR_CMD(0x38,0x1505);		
-    LCD_WR_CMD(0x39,0x1505);
-    Delay(10);
+    write_reg(0x0001,0x0100);//Driver Output Control
+    write_reg(0x0002,0x0300);//Driving Range Control
+    write_reg(0x0003,0x1030);//Entry Mode BGR, Horizontal, then vertical
+    write_reg(0x0008,0x0604);//Display Control, first 4 and last 6
+                              //lines blank
+    write_reg(0x0009,0x0000);//Display Control
+    write_reg(0x000A,0x0008);//Output FMARK every 1 Frame
     
-//################## void Display_ON(void) ####################//
-    LCD_WR_CMD(0x0007,0x0001);
+    write_reg(0x0041,0x0002);
+    write_reg(0x0060,0x2700);
+    write_reg(0x0061,0x0001);
+    write_reg(0x0090,0x0182);
+    write_reg(0x0093,0x0001);
+    write_reg(0x00a3,0x0010);
     Delay(10);
-    LCD_WR_CMD(0x0007,0x0021);
-    LCD_WR_CMD(0x0007,0x0023);
-    Delay(10);
-    LCD_WR_CMD(0x0007,0x0033);
-    Delay(10);
-    LCD_WR_CMD(0x0007,0x0133);
-    
+}
 
+static void gamma_SET(void){
+    Delay(10);
+    write_reg(0x30,0x0000);		
+    write_reg(0x31,0x0502);		
+    write_reg(0x32,0x0307);		
+    write_reg(0x33,0x0305);		
+    write_reg(0x34,0x0004);		
+    write_reg(0x35,0x0402);		
+    write_reg(0x36,0x0707);		
+    write_reg(0x37,0x0503);		
+    write_reg(0x38,0x1505);		
+    write_reg(0x39,0x1505);
+    Delay(10);
+}
+static void display_ON(void)
+{   
+    Delay(10);
+    write_reg(0x0007,0x0001);
+    Delay(10);
+    write_reg(0x0007,0x0021);
+    write_reg(0x0007,0x0023);
+    Delay(10);
+    write_reg(0x0007,0x0033);
+    Delay(10);
+    write_reg(0x0007,0x0133);
+}
+
+static void display_OFF(void)
+{
+    Delay(10);
+    write_reg(0x0007,0x0001);
+    Delay(10);
 }
 
 void lcd_Initializtion(void)
@@ -433,19 +448,20 @@ void lcd_Initializtion(void)
         printf("\r\nLCD Device ID : %04X ",deviceid);
     }
 
-    //Delay(10);    
-    //Delay(10);
+        
+    power_SET(); //Set up the power Registers
+
+    gamma_SET(); //Set up the Gamma Registers
     
-    LCD_Init1();
-    
+    display_OFF(); //Switch off the display for tests
     lcd_data_bus_test();
-    
-    lcd_gram_test();
-    
-    // printf("\r\n");
-    
+    lcd_gram_test(); 
+    display_ON();  //Switch on the display
+        
     lcd_clear( White );
-    
+    lcd_clear( Blue );
+    lcd_clear( Red  );
+    lcd_clear( White );
 
   
 }
