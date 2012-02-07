@@ -335,6 +335,7 @@ portTickType xTimeToBlock, xBlockedTime;
 			/* Now empty the queue again before the other task gets a chance to
 			execute.  If the other task had executed we would find the queue
 			empty ourselves, and the other task would be suspended. */
+
 			if( xQueueReceive( xTestQueue, &xData, bktDONT_BLOCK ) != pdPASS )
 			{
 				xErrorOccurred = pdTRUE;
@@ -369,10 +370,8 @@ portTickType xTimeToBlock, xBlockedTime;
 		}
 		vTaskDelay( bktSHORT_WAIT );
 
-		xPrimaryCycles++;
-	}
-}
-/*-----------------------------------------------------------*/
+		xPrimaryCycles++; } }
+	/*-----------------------------------------------------------*/
 
 static void vSecondaryBlockTimeTestTask( void *pvParameters )
 {

@@ -92,9 +92,10 @@ SOURCE=	main.c ili_lcd_general.c \
 		timertest.c \
 		stm32f10x_it.c \
 		stf_syscalls_minimal.c \
-		ParTest.c \
+		touch.c \
 		stm3210e_lcd.c \
 		serial.c \
+		leds.c
 
 # ST Library source files.
 ST_LIB_SOURCE= \
@@ -111,10 +112,7 @@ ST_LIB_SOURCE= \
 
 # FreeRTOS common demo source files.
 FREERTOS_COMMON_DEMO_SOURCE = \
-		$(DEMO_COMMON_DIR)/blocktim.c \
-		$(DEMO_COMMON_DIR)/death.c \
-		$(DEMO_COMMON_DIR)/flash.c \
-		$(DEMO_COMMON_DIR)/integer.c \
+	       	$(DEMO_COMMON_DIR)/integer.c \
 		$(DEMO_COMMON_DIR)/PollQ.c \
 		$(DEMO_COMMON_DIR)/semtest.c \
 

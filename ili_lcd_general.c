@@ -437,14 +437,14 @@ void lcd_Initializtion(void)
     //Delay(10);
     
     LCD_Init1();
-       
+    
     lcd_data_bus_test();
     
     lcd_gram_test();
     
     // printf("\r\n");
-
-     lcd_clear( White );
+    
+    lcd_clear( White );
     
 
   
@@ -461,7 +461,7 @@ void lcd_DrawHLine(int x1, int x2, int col, int y )
     
     lcd_SetCursor(x1, y);
     rw_data_prepare(); /* Prepare to write GRAM */
-    while (x1 < x2)
+    while (x1 <= x2)
     {
         write_data(col);
         x1 ++;
@@ -482,7 +482,7 @@ void lcd_DrawVLine(int y1, int y2, int col, int x)
 
     lcd_SetCursor(x, y1);
     rw_data_prepare(); /* Prepare to write GRAM */
-    while (y1 < y2)
+    while (y1 <= y2)
     {
         write_data(col);
         y1++;
@@ -497,6 +497,14 @@ void lcd_DrawRect(int x1, int y1, int x2, int y2, int col)
     lcd_DrawHLine(x1, x2, col, y2);
 }
 
+void lcd_DrawPixel(int x, int y, int col){
+    vTaskSuspendAll();
+    write_reg(0x0003,(1<<12)|(1<<5)|(1<<4) | (0<<3) ); // set up
+    rw_data_prepare(); /* Prepare to write GRAM */
+    lcd_SetCursor(x, y);
+    write_data(col);
+    xTaskResumeAll();
+}
 
 void lcd_PutChar(unsigned int x,unsigned int y,unsigned char c,unsigned int  charColor,unsigned int bkColor)   
 {   
@@ -570,6 +578,7 @@ void lcd_DrawCircle(unsigned char Xpos, unsigned int Ypos, unsigned int Radius)
     
     while (CurX <= CurY)
     {
+        rw_data_prepare();
         lcd_SetCursor(Xpos + CurX, Ypos + CurY);
         write_data(Black);
         
@@ -610,19 +619,55 @@ void lcd_DrawCircle(unsigned char Xpos, unsigned int Ypos, unsigned int Radius)
 
 void lcd_DrawBMP(unsigned portCHAR *Pict)
 {
-#if 0
-    unsigned portCHAR index = 0;
-    
-    lcd_SetCursor(0, 0);
-    write_reg(0x0003,(1<<12)|(1<<5)|(1<<4) | (0<<3) ); // set up
-    rw_data_prepare(); /* Prepare to write GRAM */
-    
-    for(index = 0; index < 2400; index++) // WAS 2400
-    {
-        
-        write_data(Pict[index]);
-    }
-    
-//  lcd_CtrlLinesWrite(GPIOB, CtrlPin_NCS, Bit_SET);
-#endif    
+
 }
+
+
+#if 0 //This code was in MAIN... taken for referenc for columns and
+     //lines etc
+int putChar( int ch )
+{
+static unsigned portSHORT usColumn = 0, usRefColumn = mainCOLUMN_START;
+static unsigned portCHAR ucLine = 0;
+
+	if( ( usColumn == 0 ) && ( ucLine == 0 ) )
+	{
+            lcd_clear(White);
+	}
+
+	if( ch != '\n' )
+	{
+		// Display one character on LCD 
+		//LCD_DisplayChar( ucLine, usRefColumn, (u8) ch );
+
+		// Decrement the column position by 16 */
+		usRefColumn -= mainCOLUMN_INCREMENT;
+
+		/* Increment the character counter */
+		usColumn++;
+		if( usColumn == mainMAX_COLUMN )
+		{
+			ucLine += mainROW_INCREMENT;
+			usRefColumn = mainCOLUMN_START;
+			usColumn = 0;
+		}
+	}
+	else
+	{
+		/* Move back to the first column of the next line. */
+		ucLine += mainROW_INCREMENT;
+		usRefColumn = mainCOLUMN_START;
+		usColumn = 0;
+	}
+
+	/* Wrap back to the top of the display. */
+	if( ucLine >= mainMAX_LINE )
+	{
+		ucLine = 0;
+	}
+
+	return ch;
+}
+
+
+#endif

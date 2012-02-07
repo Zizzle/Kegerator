@@ -59,7 +59,7 @@
 /* Library includes. */
 #include "stm32f10x.h"
 
-#define partstMAX_OUTPUT_LED	( 6 )
+#define partstMAX_OUTPUT_LED	( 4 )
 #define partstFIRST_LED			GPIO_Pin_6
 
 static unsigned portSHORT usOutputValue = 0;
@@ -71,7 +71,7 @@ void vParTestInitialise( void )
 GPIO_InitTypeDef GPIO_InitStructure;
 
 	/* Configure PF.06, PF.07, PF.08 and PF.09 as output push-pull */
-	GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_6 | GPIO_Pin_13;
+	GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_6;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init( GPIOD, &GPIO_InitStructure );
@@ -98,7 +98,7 @@ unsigned portSHORT usBit;
 				usOutputValue |= usBit;
 			}
 
-			//GPIO_Write( GPIOD, usOutputValue );
+//			GPIO_Write( GPIOD, usOutputValue );
 		}
 	}
 	xTaskResumeAll();

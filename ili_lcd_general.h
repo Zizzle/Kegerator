@@ -33,6 +33,7 @@ void lcd_PutString(unsigned int x, unsigned int y, unsigned char * s, unsigned i
 void lcd_DrawHLine(int x1, int x2, int col, int y);
 void lcd_DrawVLine(int y1, int y2, int col, int x);
 void lcd_DrawRect(int x1, int y1, int x2, int y2, int col);
+void lcd_DrawPixel(int x, int y, int col);
 void lcd_DrawBMP(unsigned portCHAR *Pict);
 //#define _ILI_REVERSE_DIRECTION_
 //#define use_rt_gui

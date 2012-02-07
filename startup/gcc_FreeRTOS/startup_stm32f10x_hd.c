@@ -363,11 +363,12 @@ void Default_Handler(void)
 {
 GPIO_InitTypeDef GPIO_InitStructure;
     //set D2
-	GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_7;
+	GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_13;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init( GPIOC, &GPIO_InitStructure );
-        GPIO_Write( GPIOD, 1 );
+	GPIO_Init( GPIOD, &GPIO_InitStructure );
+        GPIO_WriteBit( GPIOD, GPIO_Pin_13, 1 );       
+ 
 
   /* Go into an infinite loop. */
 
