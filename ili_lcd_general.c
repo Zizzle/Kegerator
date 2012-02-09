@@ -417,7 +417,7 @@ void lcd_Initializtion(void)
     Delay(100);
     lcd_clear( Black );
     Delay(100);
-    lcd_clear( White );
+    lcd_clear( Black );
   
 }
 
@@ -538,29 +538,37 @@ void lcd_DrawCircle(unsigned char Xpos, unsigned int Ypos, unsigned int Radius)
     
     while (CurX <= CurY)
     {
-        rw_data_prepare();
+        
         lcd_SetCursor(Xpos + CurX, Ypos + CurY);
+        rw_data_prepare();
         write_data(Black);
         
         lcd_SetCursor(Xpos + CurX, Ypos - CurY);
+        rw_data_prepare();
         write_data(Black);
         
         lcd_SetCursor(Xpos - CurX, Ypos + CurY);
+        rw_data_prepare();
         write_data(Black);
         
         lcd_SetCursor(Xpos - CurX, Ypos - CurY);
+        rw_data_prepare();
         write_data(Black);
         
         lcd_SetCursor(Xpos + CurY, Ypos + CurX);
+        rw_data_prepare();
         write_data(Black);
         
         lcd_SetCursor(Xpos + CurY, Ypos - CurX);
+        rw_data_prepare();
         write_data(Black);
         
         lcd_SetCursor(Xpos - CurY, Ypos + CurX);
+        rw_data_prepare();
         write_data(Black);
         
         lcd_SetCursor(Xpos - CurY, Ypos - CurX);
+        rw_data_prepare();
         write_data(Black);
         
         if (D < 0)
@@ -577,12 +585,88 @@ void lcd_DrawCircle(unsigned char Xpos, unsigned int Ypos, unsigned int Radius)
 }
 
 
-void lcd_DrawBMP(unsigned portCHAR *Pict)
+void lcd_DrawBMP(unsigned portCHAR *Pict, unsigned portCHAR width, unsigned portCHAR height)
 {
-
+    lcd_SetCursor(0,0);
+    rw_data_prepare();
+    int ii, jj;
+    unsigned int pixel, pixel2;
+    write_reg(0x0003,(1<<12)|(1<<5)|(0<<4) | (1<<3) );
+    for (jj = 0 ; jj < height;jj++){
+        lcd_SetCursor(jj,0);
+        rw_data_prepare();
+        for (ii = 0 ; ii < width; ii++)
+        {
+             pixel = (Pict[ii+1] & 0xFFFF) << 8;
+            
+            pixel2 = Pict[ii] & 0xFFFF;
+            pixel = pixel | pixel2;
+            
+            write_data(pixel);
+            
+            
+        }
+        
+    }
 }
 
+void lcd_DrawBMP16(const short* Pict, unsigned portCHAR width, unsigned portCHAR height)
+{
+    lcd_SetCursor(50,100);
+    rw_data_prepare();
+    unsigned int ii, jj;
+    unsigned short pixel;
+    write_reg(0x0003,(1<<12)|(1<<5)|(0<<4) | (0<<3) );
+    for (jj = 0 ; jj < height;jj++){
+        lcd_SetCursor(jj+50,100);
+        rw_data_prepare();
+        for (ii = 0 ; ii < width; ii++)
+        {
+            pixel = Pict[ii];
+            write_data(pixel);
+            printf("%x\r\n", (unsigned short)pixel);
+            Delay(5);
+        }
+        
+    }
+}
 
+#if 0
+void LCD_WriteBMP(uint32_t BmpAddress)
+{
+  uint32_t index = 0, size = 0;
+
+  /* Read bitmap size */
+  size = *(__IO uint16_t *) (BmpAddress + 2);
+  size |= (*(__IO uint16_t *) (BmpAddress + 4)) << 16;
+
+  /* Get bitmap data address offset */
+  index = *(__IO uint16_t *) (BmpAddress + 10);
+  index |= (*(__IO uint16_t *) (BmpAddress + 12)) << 16;
+
+  size = (size - index)/2;
+
+  BmpAddress += index;
+
+  /* Set GRAM write direction and BGR = 1 */
+  /* I/D=00 (Horizontal : decrement, Vertical : decrement) */
+  /* AM=1 (address is updated in vertical writing direction) */
+  LCD_WriteReg(R3, 0x1008);
+
+  LCD_WriteRAM_Prepare();
+
+  for(index = 0; index < size; index++)
+  {
+    LCD_WriteRAM(*(__IO uint16_t *)BmpAddress);
+    BmpAddress += 2;
+  }
+
+  /* Set GRAM write direction and BGR = 1 */
+  /* I/D = 01 (Horizontal : increment, Vertical : decrement) */
+  /* AM = 1 (address is updated in vertical writing direction) */
+  LCD_WriteReg(R3, 0x1018);
+}
+#endif
 #if 0 //This code was in MAIN... taken for referenc for columns and
      //lines etc
 int putChar( int ch )
@@ -631,3 +715,73 @@ static unsigned portCHAR ucLine = 0;
 
 
 #endif
+/*******************************************************************************
+* Function Name  : LCD_DrawCircle
+* Description    : Displays a circle.
+* Input          : - Xpos: specifies the X position.
+*                  - Ypos: specifies the Y position.
+*                  - Height: display rectangle height.
+*                  - Width: display rectangle width.
+* Output         : None
+* Return         : None
+*******************************************************************************/
+void lcd_DrawCircleFill(unsigned char Xpos, unsigned int Ypos, unsigned int Radius, unsigned int Col)
+{
+    int  D;/* Decision Variable */
+    unsigned int  CurX;/* Current X Value */
+    unsigned int  CurY;/* Current Y Value */
+    unsigned int dec = Radius;
+    while ((dec)>0){
+        Radius = dec;
+        D = 3 - (Radius << 1);
+        CurX = 0; 
+        CurY=Radius; 
+        while (CurX <= CurY)
+        {
+            
+            lcd_SetCursor(Xpos + CurX, Ypos + CurY);
+            rw_data_prepare();
+            write_data(Col);
+            
+            lcd_SetCursor(Xpos + CurX, Ypos - CurY);
+            rw_data_prepare();
+            write_data(Col);
+            
+            lcd_SetCursor(Xpos - CurX, Ypos + CurY);
+            rw_data_prepare();
+            write_data(Col);
+            
+            lcd_SetCursor(Xpos - CurX, Ypos - CurY);
+            rw_data_prepare();
+            write_data(Col);
+            
+            lcd_SetCursor(Xpos + CurY, Ypos + CurX);
+            rw_data_prepare();
+            write_data(Col);
+            
+            lcd_SetCursor(Xpos + CurY, Ypos - CurX);
+            rw_data_prepare();
+            write_data(Col);
+            
+            lcd_SetCursor(Xpos - CurY, Ypos + CurX);
+            rw_data_prepare();
+            write_data(Col);
+            
+            lcd_SetCursor(Xpos - CurY, Ypos - CurX);
+            rw_data_prepare();
+            write_data(Col);
+            
+            if (D < 0)
+            {
+                D += (CurX << 2) + 6;
+            }
+            else
+            {
+                D += ((CurX - CurY) << 2) + 10;
+                CurY--;
+            }
+            CurX++;
+        }
+        dec--;
+    }
+}

@@ -34,7 +34,9 @@ void lcd_DrawHLine(int x1, int x2, int col, int y);
 void lcd_DrawVLine(int y1, int y2, int col, int x);
 void lcd_DrawRect(int x1, int y1, int x2, int y2, int col);
 void lcd_DrawPixel(int x, int y, int col);
-void lcd_DrawBMP(unsigned portCHAR *Pict);
-
+void lcd_DrawBMP(unsigned portCHAR *Pict, unsigned portCHAR width, unsigned portCHAR height);
+void lcd_DrawBMP16(const short *Pict, unsigned portCHAR width, unsigned portCHAR height);
+void lcd_DrawCircle(unsigned char Xpos, unsigned int Ypos, unsigned int Radius);
+void lcd_DrawCircleFill(unsigned char Xpos, unsigned int Ypos, unsigned int Radius, unsigned int Col);
 
 #endif // ILI_LCD_GENERAL_H_INCLUDED

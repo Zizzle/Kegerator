@@ -107,20 +107,12 @@
 #include "flash.h"
 #include "comtest2.h"
 #include "leds.h"
+#include "touch.h"
+//#include "sumatra1.h"
+//#include "bitmap.h"
 /*-----------------------------------------------------------*/
 
-/* The time between cycles of the 'check' functionality (defined within the
-tick hook. */
-#define mainCHECK_DELAY		( ( portTickType ) 5000 / portTICK_RATE_MS )
-
 /* Task priorities. */
-//#define mainQUEUE_POLL_PRIORITY		( tskIDLE_PRIORITY + 2 )
-//#define mainCHECK_TASK_PRIORITY		( tskIDLE_PRIORITY + 3 )
-//#define mainSEM_TEST_PRIORITY		( tskIDLE_PRIORITY + 1 )
-
-//#define mainBLOCK_Q_PRIORITY		( tskIDLE_PRIORITY + 2 )
-
-//#define mainCREATOR_TASK_PRIORITY       ( tskIDLE_PRIORITY + 3 )
 #define mainFLASH_TASK_PRIORITY		( tskIDLE_PRIORITY + 1 )
 #define mainCOM_TEST_PRIORITY		( tskIDLE_PRIORITY + 1 )
 #define mainINTEGER_TASK_PRIORITY       ( tskIDLE_PRIORITY )
@@ -132,7 +124,7 @@ time. */
 #define mainMESSAGE_QUEUE_SIZE                                  ( 30 )
 /* The check task uses the sprintf function so requires a little more stack. */
 #define mainCHECK_TASK_STACK_SIZE	( configMINIMAL_STACK_SIZE + 1000 )
-#define mainLCD_TASK_STACK_SIZE		( configMINIMAL_STACK_SIZE + 700 )
+#define mainLCD_TASK_STACK_SIZE		( configMINIMAL_STACK_SIZE + 1000 )
 
 /* Dimensions the buffer into which the jitter time is written. */
 #define mainMAX_MSG_LEN						25
@@ -205,12 +197,9 @@ void vTouchTask( void *pvParameters );
 /*-----------------------------------------------------------*/
 
 /* The queue used to send messages to the LCD task. */
-xQueueHandle xLCDQueue, xTPQueue, xMessageQueue;
-
+xQueueHandle xLCDQueue, xMessageQueue;
+xQueueHandle xTPQueue;
 xTaskHandle xLCDTaskHandle, xCheckTaskHandle, xTouchTaskHandle, xTerminalTaskHandle;
-char messageBuf[0xFF];
-// Needed by file core_cm3.h
-volatile int ITM_RxBuffer;
 
 typedef struct 
 {
@@ -218,7 +207,13 @@ typedef struct
     unsigned int uiY;
 } TP_PosData;
 
-TP_PosData TP_PD;
+TP_PosData TP_PD; 
+
+char messageBuf[0xFF];
+// Needed by file core_cm3.h
+volatile int ITM_RxBuffer;
+
+
 
 /*-----------------------------------------------------------*/
 
@@ -291,40 +286,55 @@ int main( void )
 void vLCDTask( void *pvParameters )
 {
    
-    int ii = 0;
+    unsigned int ii = 0;
     int cols[] = {Red, Grey, Green, Blue, Magenta, Green, Cyan};
     portTickType xLastExecutionTime = xTaskGetTickCount();
     TP_PosData rxStruct;
     portBASE_TYPE xStatus;
     portTickType xTicksToWait = 50/portTICK_RATE_MS;
     char buf[30] = "Message From LCD Task\r\n";
-    
+    char txt[30];
     /* Initialise the LCD and display a startup message. */
     lcd_Initializtion();          
    
+    //
     lcd_PutString(5, 10, "Colour LCD Touch\0", Cyan, Black );
     lcd_PutString(5, 26, "Testing FreeRTOS\0", Blue2, Black);
     lcd_PutString(5, 44, "ARM Cortex CM3 Processor\0", Black, White);
     lcd_PutString(5, 60, "STM32F103VE 512k Flash\0", Black, White);
-    vTaskPrioritySet(NULL, tskIDLE_PRIORITY+2);
+   
+    /*
+    for(ii = 0; ii < 0xFFFF; ii++)
+    {
+        lcd_DrawCircleFill(120, 160, 50, ii);
+        sprintf(txt, "Col = %u\0", ii);
+        lcd_PutString(5, 76, txt, Black, White);
+    }
+    */
+    lcd_DrawCircleFill(120, 160,20, 0xFFFF);   
+    lcd_DrawCircleFill(20, 160,20,  0xE006);   
     
+    
+    // lcd_DrawBMP16(pucImage, bmpBITMAP_WIDTH, bmpBITMAP_HEIGHT);
+    vTaskPrioritySet(NULL, tskIDLE_PRIORITY+2);
     for( ;; )
     {
         
         xStatus = xQueueReceive( xTPQueue, &rxStruct, xTicksToWait);
             // 
         
-        if (!xStatus) taskYIELD();
-        
-        
-        lcd_DrawHLine(rxStruct.uiX, rxStruct.uiX, Black, rxStruct.uiY);
-        
-        
-        xQueueSendToBack(xMessageQueue, &buf, 0);
-        
+        if (xStatus == pdTRUE) //if we dont have something to print, leave
+        {
+            lcd_DrawHLine(rxStruct.uiX, rxStruct.uiX, Black, rxStruct.uiY);
+            xQueueSendToBack(xMessageQueue, &buf, 0); //send message
+                                                      //to console
+        }
+        taskYIELD();
     }   
     
 }
+
+/*-----------------------------------------------------------*/
 
 void vTerminalMessagesTask( void *pvParameters )
 {
@@ -336,7 +346,7 @@ void vTerminalMessagesTask( void *pvParameters )
 
     for(;;)
     {
-        vTaskDelayUntil(&xLastExecutionTime, 300/portTICK_RATE_MS ); 
+        vTaskDelayUntil(&xLastExecutionTime, 1000/portTICK_RATE_MS ); 
         
         heap =  xPortGetFreeHeapSize();
       
@@ -358,12 +368,14 @@ void vTerminalMessagesTask( void *pvParameters )
         printf("Cycle Count = %u\r\n", ulIdleCycleCount);       
         
         
-        if ( uxQueueMessagesWaiting ( xMessageQueue ) )
+        if ( uxQueueMessagesWaiting ( xMessageQueue ) ){
             xStatus = xQueueReceive( xMessageQueue, &rxBuf, 0);
-        printf("\r\nIncoming Message! ----\r\n");
-        printf(rxBuf);
-        printf("Message Complete! ----\r\n\r\n");
+            printf("\r\nIncoming Message! ----\r\n");
+            printf(rxBuf);
+            printf("Message Complete! ----\r\n\r\n");
+        }
         xTaskResumeAll();
+        
     }
     taskYIELD();
 }
@@ -438,11 +450,9 @@ static void prvSetupHardware( void )
 
 	/* Configure HCLK clock as SysTick clock source. */
 	SysTick_CLKSourceConfig( SysTick_CLKSource_HCLK );
-        
-       
-        
-        
+                
 }
+
 /*-----------------------------------------------------------*/
 void vApplicationStackOverflowHook( xTaskHandle *pxTask, signed portCHAR *pcTaskName )
 {
@@ -462,37 +472,33 @@ void vApplicationStackOverflowHook( xTaskHandle *pxTask, signed portCHAR *pcTask
 
 void vStackOverflowCheckTask( void *pvParameters ) 
 {
-        
+    // TEST TASK    
     portTickType xLastExecutionTime = xTaskGetTickCount();
     for (;;)
     {
-        
         vTaskDelayUntil(&xLastExecutionTime, 1000/portTICK_RATE_MS );
-       
-       
-       
-         
     }
 }
 
+/*-----------------------------------------------------------*/
+
+
 void vTouchTask( void *pvParameters ) 
 {
-    //vTaskSuspendAll();
     Touch_Initializtion();
-    //xTaskResumeAll();
     portTickType xLastExecutionTime = xTaskGetTickCount();
     portTickType xTicksToWait = 100/portTICK_RATE_MS;
-    //char txBuf[50];
+    portBASE_TYPE xStatus;
     unsigned int x = 0, y = 0;
     TP_PD.uiX = 0;
     TP_PD.uiY = 0;
         
         
-    portBASE_TYPE xStatus;
+    
+ 
     for (;;)
     {
-        // printf("Touchchecked %d, %d\r\n", TP_PD.uiX, TP_PD.uiY);        
-        //printf("Touch HWM = %d\r\n", uxTaskGetStackHighWaterMark(NULL));  
+        
         vTaskDelayUntil(&xLastExecutionTime, 1/portTICK_RATE_MS );
         
         x = Touch_MeasurementX();
@@ -501,12 +507,11 @@ void vTouchTask( void *pvParameters )
         TP_PD.uiY = y;
         
         
-        if ((x|y)!=0)
+        if ((x|y)!=0) // if we have a touch
         {
-            xStatus = xQueueSendToBack( xTPQueue, &TP_PD, xTicksToWait);  
-    
+            //send the position to the TP Queue (taken by LCD task)
+            xStatus = xQueueSendToBack( xTPQueue, &TP_PD, xTicksToWait );  
         }
-
         taskYIELD();
     }
 }
@@ -532,5 +537,4 @@ void assert_failed( unsigned portCHAR* pcFile, unsigned portLONG ulLine )
 }
 
 #endif
-
 
