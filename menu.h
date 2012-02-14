@@ -24,6 +24,6 @@ struct menu {
 void menu_set_root(struct menu *root_menu);
 void menu_key(uint16_t x, uint16_t y);
 void menu_clear(void);
-void menu_run_applet(void (*applet_key_handler)(unsigned char));
+void menu_run_applet(void (*applet_key_handler)(uint16_t x, uint16_t y));
 void menu_update(void);
 #endif

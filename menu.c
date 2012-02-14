@@ -167,9 +167,7 @@ void menu_key(uint16_t x, uint16_t y)
     else window = 255;
 
     
-    sprintf(buf,  "touched %d\r\n",window );
-    xQueueSendToBack(xConsoleQueue, &buf, 0); //send message
-
+  
     if (window == 6)
     {
         if (g_index > 0)
@@ -182,11 +180,15 @@ void menu_key(uint16_t x, uint16_t y)
    
     if (window < 6)
     {
-        
+       
+      
         if (g_menu[g_index][g_item+1].text != NULL)
             g_item = window;
         
-        else return;
+        else {
+            g_item = 0;
+            return;
+        }
         g_crumbs[g_index] = g_item;
         //first set the callback to the current menu's 
         //"activate" element. Ie this is where to 
@@ -207,25 +209,27 @@ void menu_key(uint16_t x, uint16_t y)
             g_menu_applet = g_menu[g_index][g_item].key_handler;
             menu_clear();
         }
-
+         sprintf(buf,  "touched cell %d, item = %d, index = %d\r\n",window, g_item, g_index );
+        xQueueSendToBack(xConsoleQueue, &buf, 0); //send message
+        
         // run the callback which should start the applet or update the display
         if (callback)
         {
                 callback();
         }
     }
-    else g_item = 0;
+    g_item = 0;
    
 }
 
 void menu_clear(void)
 {
     lcd_clear(Black);
-//    lcd_clear_pixels(0, HILIGHT_Y(g_item + 1), HILIGHT_W, HILIGHT_H);
+
 }
 
-void menu_run_applet(void (*applet_key_handler)(unsigned char))
+void menu_run_applet(void (*applet_key_handler)(uint16_t x, uint16_t y))
 {
-    //g_menu_applet = applet_key_handler;
+    g_menu_applet = applet_key_handler;
     menu_clear();
 }
