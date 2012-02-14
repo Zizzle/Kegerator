@@ -13,7 +13,8 @@
 #include "touch.h"
 #include "task.h"
 #include "lcd.h"
-
+#include "menu.h"
+#include "console.h"
 #define CH_X  0xd0//0x90
 #define CH_Y  0x90//0xd0
 
@@ -256,33 +257,44 @@ void vTouchTask( void *pvParameters )
 {
     Touch_Initializtion();
     portTickType xLastExecutionTime = xTaskGetTickCount();
-    portTickType xTicksToWait = 100/portTICK_RATE_MS;
+    portTickType xTicksToWait = 1000/portTICK_RATE_MS;
     portBASE_TYPE xStatus;
     unsigned int x = 0, y = 0;
     TP_PD.uiX = 0;
     TP_PD.uiY = 0;
-        
+    // char buf[50];
         
     
  
     for (;;)
     {
         
-        vTaskDelayUntil(&xLastExecutionTime, 1/portTICK_RATE_MS );
+        vTaskDelayUntil(&xLastExecutionTime, 100/portTICK_RATE_MS );
         
         x = Touch_MeasurementX();
         y = Touch_MeasurementY();
         TP_PD.uiX = x;
         TP_PD.uiY = y;
-        
-        
+        //  sprintf(buf, "touch %d, %d\r\n", x, y);
+        //
+        // xStatus = xQueueSendToBack( xConsoleQueue, &buf, xTicksToWait );  
         if ((x|y)!=0) // if we have a touch
         {
             //send the position to the TP Queue (taken by LCD task)
-            xStatus = xQueueSendToBack( xLCDQueue, &TP_PD, xTicksToWait );  
+            // xStatus = xQueueSendToBack( xLCDQueue, &TP_PD, xTicksToWait );  
+            
+            menu_key(x, y);
         }
-        taskYIELD();
+        //taskYIELD();
     }
 }
 
    
+portBASE_TYPE touchIsInWindow(uint16_t x, uint16_t y, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
+{
+    //   char buf[256] = "in check\r\n";
+    // xQueueSendToBack(xConsoleQueue, &buf, 0); //send message
+    if (((x < x2) && (x > x1)) && ((y < y2) && (y > y1)))
+        return pdTRUE;
+    else return pdFALSE;
+}

@@ -95,7 +95,8 @@ SOURCE=	main.c 	lcd.c \
 		stm3210e_lcd.c \
 		serial.c \
 		leds.c \
-		console.c
+		console.c \
+		menu.c
 
 # ST Library source files.
 ST_LIB_SOURCE= \

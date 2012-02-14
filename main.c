@@ -85,7 +85,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
+//#include <math.h>
 #include <stdint.h>
 
 /* Scheduler includes. */
@@ -105,6 +105,7 @@
 #include "leds.h"
 #include "touch.h"
 #include "lcd.h"
+#include "menu.h" 
 
 /*-----------------------------------------------------------*/
 
@@ -121,6 +122,42 @@ static void prvSetupHardware( void );
 
 unsigned long ulIdleCycleCount = 0UL;
 
+struct menu foo2_menu[] =
+{
+    {"A",    NULL,     NULL, NULL}, 
+    {"B",    NULL,     NULL, NULL},
+    {"C",    NULL,     NULL, NULL},
+    {"D",    NULL,     NULL, NULL},
+    {NULL, NULL, NULL, NULL}
+};
+
+struct menu foo_menu[] =
+{
+    {"Text1",    NULL,     NULL, NULL}, 
+    {"Text2",    NULL,     NULL, NULL},
+    {"Text3",    NULL,     NULL, NULL},
+    {"Text4",    foo2_menu,     NULL, NULL},
+    {NULL, NULL, NULL, NULL}
+};
+
+struct menu bar_menu[] =
+{
+    {"Test1",    NULL,     NULL, NULL}, 
+    {"Test2",    NULL,     NULL, NULL},
+    {"Test3",    NULL,     NULL, NULL},
+    {"Test4",    NULL,     NULL, NULL},
+    {NULL, NULL, NULL, NULL}
+};
+
+struct menu main_menu[] =
+{
+    {"Settings",          NULL,          NULL, NULL},
+    {"Brew Start",        bar_menu,          NULL, NULL},
+    {"Brew Resume",       NULL,         NULL,  NULL},
+    {"Clean up",          foo_menu,      NULL,             NULL},
+    {"Diagnostics",       NULL,     NULL,             NULL},
+    {NULL, NULL, NULL, NULL}
+};
 
 /*-----------------------------------------------------------*/
 
@@ -158,17 +195,19 @@ int main( void )
     
     xTaskCreate( vTouchTask, 
                  ( signed portCHAR * ) "touch", 
-                 configMINIMAL_STACK_SIZE , 
+                 configMINIMAL_STACK_SIZE +1500, 
                  NULL, 
                  tskIDLE_PRIORITY+2,
                  &xTouchTaskHandle );
     
     xTaskCreate( vTerminalMessagesTask, 
                  ( signed portCHAR * ) "term", 
-                 configMINIMAL_STACK_SIZE + 500, 
+                 configMINIMAL_STACK_SIZE + 1500, 
                  NULL, 
                  tskIDLE_PRIORITY,
                  &xTerminalTaskHandle );
+    
+    menu_set_root(main_menu);
     
     /* Start the scheduler. */
     vTaskStartScheduler();
