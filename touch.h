@@ -13,16 +13,21 @@
 #ifndef TOUCH_H
 #define TOUCH_H
 
-
-
+void vTouchTask( void *pvParameters ) ;
 void Touch_Initializtion(void);
-u16  Touch_GetPhyX(void);
-u16  Touch_GetPhyY(void);
-u16  Touch_MeasurementX(void);
-u16  Touch_MeasurementY(void);
+uint16_t Touch_GetPhyX(void);
+uint16_t Touch_GetPhyY(void);
+uint16_t  Touch_MeasurementX(void);
+uint16_t  Touch_MeasurementY(void);
 
 
 
+typedef struct 
+{
+    unsigned int uiX;
+    unsigned int uiY;
+} TP_PosData;
 
+TP_PosData TP_PD; 
 
 #endif

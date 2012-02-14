@@ -36,25 +36,25 @@ void vLEDInit( void )
     GPIO_InitTypeDef GPIO_InitStructure;
     
     //D1 = PC6, D2 = PC7 , D3 = PD13, D4 = PD6
-    GPIO_InitStructure.GPIO_Pin =  D1;
+    GPIO_InitStructure.GPIO_Pin =  D1_PIN;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init( D1PORT, &GPIO_InitStructure );
+    GPIO_Init( D1_PORT, &GPIO_InitStructure );
     
-    GPIO_InitStructure.GPIO_Pin =  D2;
+    GPIO_InitStructure.GPIO_Pin =  D2_PIN;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init( D2PORT, &GPIO_InitStructure );
+    GPIO_Init( D2_PORT, &GPIO_InitStructure );
 
-    GPIO_InitStructure.GPIO_Pin =  D3;
+    GPIO_InitStructure.GPIO_Pin =  D3_PIN;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init( D3PORT, &GPIO_InitStructure );
+    GPIO_Init( D3_PORT, &GPIO_InitStructure );
 
-    GPIO_InitStructure.GPIO_Pin =  D4;
+    GPIO_InitStructure.GPIO_Pin =  D4_PIN;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init( D3PORT, &GPIO_InitStructure );
+    GPIO_Init( D3_PORT, &GPIO_InitStructure );
     
     xTaskCreate( vStartupLEDTask, 
                  ( signed portCHAR * ) "LED",
@@ -67,21 +67,21 @@ void vLEDInit( void )
 }
 
 void vStartupLEDTask ( void *pvParameters ) {
-    vLEDSet(D1PORT, D1, 1);
-    vLEDSet(D2PORT, D2, 1);
-    vLEDSet(D3PORT, D3, 1);
-    vLEDSet(D4PORT, D4, 1);
+    vLEDSet(D1_PORT, D1_PIN, ON);
+    vLEDSet(D2_PORT, D2_PIN, ON);
+    vLEDSet(D3_PORT, D3_PIN, ON);
+    vLEDSet(D4_PORT, D4_PIN, ON);
     
     vTaskDelay(500/portTICK_RATE_MS);
     
-    vLEDSet(D1PORT, D1, 0);
-    vLEDSet(D2PORT, D2, 0);
-    vLEDSet(D3PORT, D3, 0);
-    vLEDSet(D4PORT, D4, 0);
+    vLEDSet(D1_PORT, D1_PIN, OFF);
+    vLEDSet(D2_PORT, D2_PIN, OFF);
+    vLEDSet(D3_PORT, D3_PIN, OFF);
+    vLEDSet(D4_PORT, D4_PIN, OFF);
     
     xTaskCreate( vLEDFlashTask, 
-                 ( signed portCHAR * ) "LED Flash",
-                 configMINIMAL_STACK_SIZE + 400,
+                 ( signed portCHAR * ) "LEDf",
+                 configMINIMAL_STACK_SIZE,
                  NULL,
                  tskIDLE_PRIORITY+2,
                  NULL);
@@ -104,7 +104,7 @@ void vLEDFlashTask( void *pvParameters )
     for (;;)
     {
         vTaskDelayUntil( &xLastExecutionTime, 200/portTICK_RATE_MS ); 
-        vLEDToggle( D4PORT, D4 );
+        vLEDToggle( D4_PORT, D4_PIN );
         //    printf("LedFlash HWM = %d\r\n", uxTaskGetStackHighWaterMark(NULL));
         taskYIELD();
     }

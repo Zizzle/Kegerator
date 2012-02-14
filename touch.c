@@ -1,10 +1,19 @@
 //#include "stm32f10x_lib.h"
 //#include "ili9320.h"
-#include "stm32f10x.h"
-#include "touch.h"
-#include "FreeRTOS.h"
 #include <stdio.h>
+
+#include <stdint.h>
+
+#include "stm32f10x.h"
+
+#include "FreeRTOS.h"
+
 #include "queue.h"
+
+#include "touch.h"
+#include "task.h"
+#include "lcd.h"
+
 #define CH_X  0xd0//0x90
 #define CH_Y  0x90//0xd0
 
@@ -177,7 +186,7 @@ u16 _AD2Y(int ady)
     return sy;
 }
 
-u16  Touch_MeasurementX(void)
+uint16_t  Touch_MeasurementX(void)
 {
     u8 i;
     u16 p=0;
@@ -193,7 +202,7 @@ u16  Touch_MeasurementX(void)
     else return 0;
 }
 
-u16  Touch_MeasurementY(void)
+uint16_t  Touch_MeasurementY(void)
 {
     u8 i;
     u16 p=0;
@@ -243,3 +252,37 @@ u16 Dy(u16 yy)
   return (_AD2Y(yy));
 }
 */
+void vTouchTask( void *pvParameters ) 
+{
+    Touch_Initializtion();
+    portTickType xLastExecutionTime = xTaskGetTickCount();
+    portTickType xTicksToWait = 100/portTICK_RATE_MS;
+    portBASE_TYPE xStatus;
+    unsigned int x = 0, y = 0;
+    TP_PD.uiX = 0;
+    TP_PD.uiY = 0;
+        
+        
+    
+ 
+    for (;;)
+    {
+        
+        vTaskDelayUntil(&xLastExecutionTime, 1/portTICK_RATE_MS );
+        
+        x = Touch_MeasurementX();
+        y = Touch_MeasurementY();
+        TP_PD.uiX = x;
+        TP_PD.uiY = y;
+        
+        
+        if ((x|y)!=0) // if we have a touch
+        {
+            //send the position to the TP Queue (taken by LCD task)
+            xStatus = xQueueSendToBack( xLCDQueue, &TP_PD, xTicksToWait );  
+        }
+        taskYIELD();
+    }
+}
+
+   

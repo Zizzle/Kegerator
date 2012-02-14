@@ -88,14 +88,14 @@ CFLAGS=-g$(DEBUG)\
 
 
 # Source files
-SOURCE=	main.c ili_lcd_general.c \
-		timertest.c \
+SOURCE=	main.c 	lcd.c \
 		stm32f10x_it.c \
 		stf_syscalls_minimal.c \
 		touch.c \
 		stm3210e_lcd.c \
 		serial.c \
-		leds.c
+		leds.c \
+		console.c
 
 # ST Library source files.
 ST_LIB_SOURCE= \

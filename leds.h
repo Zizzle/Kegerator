@@ -13,15 +13,19 @@
 #ifndef LEDS_H
 #define LEDS_H
 
-#define D1 GPIO_Pin_6 
-#define D2 GPIO_Pin_7
-#define D3 GPIO_Pin_13
-#define D4 GPIO_Pin_6
+#define D1_PIN GPIO_Pin_6 
+#define D2_PIN GPIO_Pin_7
+#define D3_PIN GPIO_Pin_13
+#define D4_PIN GPIO_Pin_6
 
-#define D1PORT GPIOC
-#define D2PORT GPIOC
-#define D3PORT GPIOD
-#define D4PORT GPIOD
+#define D1_PORT GPIOC
+#define D2_PORT GPIOC
+#define D3_PORT GPIOD
+#define D4_PORT GPIOD
+
+#define ON  1
+#define OFF 0
+
 
 void vLEDSet( GPIO_TypeDef *GPIO_PORT , 
               uint16_t GPIO_Pin, 
