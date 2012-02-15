@@ -15,6 +15,7 @@
 #include "lcd.h"
 #include "menu.h"
 #include "console.h"
+#include "speaker.h"
 #define CH_X  0xd0//0x90
 #define CH_Y  0x90//0xd0
 
@@ -123,7 +124,7 @@ void Touch_Initializtion()
   /*****************************
   **    Ó²ŒþÁ¬œÓËµÃ÷          **
   ** STM32         TSC2046    **
-  ** PB6    <----> nPENIRQ    ** i
+  ** PC6    <----> nPENIRQ    ** i
   ** PC13    <----> BUSY      ** i
   ** PA5    <----> DCLK       ** o
   ** PA7    <----> DIN        ** o
@@ -259,14 +260,14 @@ void vTouchTask( void *pvParameters )
     portTickType xLastExecutionTime = xTaskGetTickCount();
     portTickType xTicksToWait = 1000/portTICK_RATE_MS;
     portBASE_TYPE xStatus;
-    unsigned int x = 0, y = 0; // current x,y value
+    unsigned int x = 0, y = 0, beep = TOUCH_BEEP; // current x,y value
     static unsigned int lx = 0, ly = 0; //place to store the last
                                         //value of x and y for sending
                                         //to the menu
 
     portBASE_TYPE sense, changed;
     static portBASE_TYPE last;
-    char buf[50];
+//    char buf[50];
         
     
  
@@ -290,8 +291,10 @@ void vTouchTask( void *pvParameters )
 
         // do we have negative edge of touch
         if ((changed==1) && (sense==0))
+        {
             menu_key(lx, ly);    
-   
+            xQueueSend(xBeepQueue, &beep, 0);
+        }
         //save static variables
         last = sense; 
         lx = x;

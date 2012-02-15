@@ -22,12 +22,5 @@ uint16_t  Touch_MeasurementY(void);
 portBASE_TYPE touchIsInWindow(uint16_t x, uint16_t y, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
 
 
-typedef struct 
-{
-    unsigned int uiX;
-    unsigned int uiY;
-} TP_PosData;
-
-TP_PosData TP_PD; 
 
 #endif

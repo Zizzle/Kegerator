@@ -36,11 +36,7 @@ void vLEDInit( void )
     GPIO_InitTypeDef GPIO_InitStructure;
     
     //D1 = PC6, D2 = PC7 , D3 = PD13, D4 = PD6
-    GPIO_InitStructure.GPIO_Pin =  D1_PIN;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init( D1_PORT, &GPIO_InitStructure );
-    
+       
     GPIO_InitStructure.GPIO_Pin =  D2_PIN;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
@@ -67,14 +63,13 @@ void vLEDInit( void )
 }
 
 void vStartupLEDTask ( void *pvParameters ) {
-    vLEDSet(D1_PORT, D1_PIN, ON);
     vLEDSet(D2_PORT, D2_PIN, ON);
     vLEDSet(D3_PORT, D3_PIN, ON);
     vLEDSet(D4_PORT, D4_PIN, ON);
     
     vTaskDelay(500/portTICK_RATE_MS);
     
-    vLEDSet(D1_PORT, D1_PIN, OFF);
+    
     vLEDSet(D2_PORT, D2_PIN, OFF);
     vLEDSet(D3_PORT, D3_PIN, OFF);
     vLEDSet(D4_PORT, D4_PIN, OFF);

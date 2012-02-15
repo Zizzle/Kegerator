@@ -96,7 +96,8 @@ SOURCE=	main.c 	lcd.c \
 		serial.c \
 		leds.c \
 		console.c \
-		menu.c
+		menu.c \
+		speaker.c
 
 # ST Library source files.
 ST_LIB_SOURCE= \
