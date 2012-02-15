@@ -1,6 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-// RCS $Date: 2010/12/29 00:42:17 $
-// RCS $Revision: 2.1 $
 // RCS $Source: /home/brad/Documents/AVR/brewbot/RCS/menu.c,v $
 // Copyright (C) 2007, Matthew Pratt
 //
@@ -13,11 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
-//#include <avr/pgmspace.h>
-//#include "powertip.h"
-//#include "buttons.h"
 #include "FreeRTOS.h"
-
 #include "touch.h"
 #include "menu.h"
 #include "queue.h"
@@ -25,9 +19,7 @@
 #include "console.h"
 #define HEIGHT 6
 
-//#define HILIGHT_W 140
-//#define HILIGHT_Y(row) ((row) * 8 - 1)
-//#define HILIGHT_H 9
+
 char buf[30];
 static struct menu  *g_menu[MAX_DEPTH];
 
@@ -68,34 +60,9 @@ void menu_update(void)
 {
     unsigned char ii;
     
-  
-    lcd_clear(Black);
-    //print out all of the menu texts.
-    for (ii = 0; ii < HEIGHT && g_menu[g_index][ii].text; ii++)
-    {
-        lcd_text_menu(1, ii + 1, g_menu[g_index][ii].text);
-    }
-    lcd_DrawRect(0, 0, 150, 50, Red);
-    lcd_DrawRect(0, 50, 150, 100, Red);
-    lcd_DrawRect(0, 100, 150, 150, Red);
-    lcd_DrawRect(0, 150, 150, 200, Red);
-    lcd_DrawRect(0, 200, 150, 250, Red);
-    lcd_DrawRect(0, 250, 150, 300, Red);
-
-    lcd_DrawRect(160, 0, 230, 100, Red);
-    lcd_DrawRect(160, 100, 230, 200, Red);
-
-   
-    // lcd_DrawRect(0, 250, 150, 300, Red);
-    // lcd_DrawRect(0, 250, 150, 300, Red);
-   
-    //highlight the first item
-    //menu_update_hilight();
-
-    // this section adds the name of the g_crumbs to the end of
-    // crumbs so we get something like "AVR:test menu:test params"
-    //printf_P(PSTR("%s"), g_menu[ii][ii].text); //prints the current menu level to the
-                                 //console also.
+    lcd_menu_update(g_menu[g_index]);
+    return;
+                                 
 }
 
 void menu_set_root(struct menu *root_menu)
@@ -124,7 +91,11 @@ static void menu_applet_key(uint16_t x, uint16_t y)
 
 void menu_key(uint16_t x, uint16_t y)
 {
-       if (g_menu_applet)
+    // If this function is called, we definitely have a negative edge
+    // on the touch screen so no need to check for that here
+
+
+    if (g_menu_applet)
        {
            menu_applet_key(x,y);
         return;
@@ -133,9 +104,6 @@ void menu_key(uint16_t x, uint16_t y)
   
     uint16_t window = 0;
     static uint16_t last_window = 0; 
-    if (x == 0 && y == 0) //no key pressed 
-        return;
-    
     
     if (touchIsInWindow(x,y, 0,0, 150,50) == pdTRUE)
         window = 0;
@@ -167,7 +135,7 @@ void menu_key(uint16_t x, uint16_t y)
     else window = 255;
 
     
-  
+    //Back Button
     if (window == 6)
     {
         if (g_index > 0)
@@ -209,23 +177,20 @@ void menu_key(uint16_t x, uint16_t y)
             g_menu_applet = g_menu[g_index][g_item].key_handler;
             menu_clear();
         }
-         sprintf(buf,  "touched cell %d, item = %d, index = %d\r\n",window, g_item, g_index );
-        xQueueSendToBack(xConsoleQueue, &buf, 0); //send message
         
         // run the callback which should start the applet or update the display
         if (callback)
         {
-                callback();
+            callback();
         }
     }
     g_item = 0;
-   
+    
 }
 
 void menu_clear(void)
 {
     lcd_clear(Black);
-
 }
 
 void menu_run_applet(void (*applet_key_handler)(uint16_t x, uint16_t y))

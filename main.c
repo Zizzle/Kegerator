@@ -151,11 +151,11 @@ struct menu bar_menu[] =
 
 struct menu main_menu[] =
 {
-    {"Settings",          NULL,          NULL, NULL},
-    {"Brew Start",        bar_menu,          NULL, NULL},
-    {"Brew Resume",       NULL,         NULL,  NULL},
-    {"Clean up",          foo_menu,      NULL,             NULL},
-    {"Diagnostics",       NULL,     NULL,             NULL},
+    {"Main1",       NULL,      NULL, NULL},
+    {"Main2",       bar_menu,  NULL, NULL},
+    {"Main3",       NULL,      NULL, NULL},
+    {"Main4",       foo_menu,  NULL, NULL},
+    {"Main5",       NULL,      NULL, NULL},
     {NULL, NULL, NULL, NULL}
 };
 

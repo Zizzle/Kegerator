@@ -103,7 +103,7 @@ void vLEDFlashTask( void *pvParameters )
     portTickType xLastExecutionTime = xTaskGetTickCount();
     for (;;)
     {
-        vTaskDelayUntil( &xLastExecutionTime, 200/portTICK_RATE_MS ); 
+        vTaskDelayUntil( &xLastExecutionTime, 500/portTICK_RATE_MS ); 
         vLEDToggle( D4_PORT, D4_PIN );
         //    printf("LedFlash HWM = %d\r\n", uxTaskGetStackHighWaterMark(NULL));
         taskYIELD();

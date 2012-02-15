@@ -259,33 +259,43 @@ void vTouchTask( void *pvParameters )
     portTickType xLastExecutionTime = xTaskGetTickCount();
     portTickType xTicksToWait = 1000/portTICK_RATE_MS;
     portBASE_TYPE xStatus;
-    unsigned int x = 0, y = 0;
-    TP_PD.uiX = 0;
-    TP_PD.uiY = 0;
-    // char buf[50];
+    unsigned int x = 0, y = 0; // current x,y value
+    static unsigned int lx = 0, ly = 0; //place to store the last
+                                        //value of x and y for sending
+                                        //to the menu
+
+    portBASE_TYPE sense, changed;
+    static portBASE_TYPE last;
+    char buf[50];
         
     
  
     for (;;)
     {
+        //check TP every 50 Milliseconds
+        vTaskDelayUntil(&xLastExecutionTime, 50/portTICK_RATE_MS );
         
-        vTaskDelayUntil(&xLastExecutionTime, 100/portTICK_RATE_MS );
-        
-        x = Touch_MeasurementX();
+        //measure x,y
+        x = Touch_MeasurementX(); 
         y = Touch_MeasurementY();
-        TP_PD.uiX = x;
-        TP_PD.uiY = y;
-        //  sprintf(buf, "touch %d, %d\r\n", x, y);
-        //
-        // xStatus = xQueueSendToBack( xConsoleQueue, &buf, xTicksToWait );  
+        
+        //do we have a touch?
+        sense = 0;
         if ((x|y)!=0) // if we have a touch
-        {
-            //send the position to the TP Queue (taken by LCD task)
-            // xStatus = xQueueSendToBack( xLCDQueue, &TP_PD, xTicksToWait );  
-            
-            menu_key(x, y);
-        }
-        //taskYIELD();
+            sense  = 1;
+        changed = sense ^ last;
+        
+//sprintf(buf, "last %d, sense %d, changed %d\r\n", last, sense,changed );
+//xStatus = xQueueSendToBack( xConsoleQueue, &buf, xTicksToWait );   
+
+        // do we have negative edge of touch
+        if ((changed==1) && (sense==0))
+            menu_key(lx, ly);    
+   
+        //save static variables
+        last = sense; 
+        lx = x;
+        ly = y;
     }
 }
 
