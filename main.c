@@ -25,6 +25,7 @@
 #include "lcd.h"
 #include "menu.h" 
 #include "speaker.h"
+#include "timer.h"
 /*-----------------------------------------------------------*/
 
 /* The period of the system clock in nano seconds.  This is used to calculate
@@ -86,7 +87,8 @@ struct menu main_menu[] =
 xTaskHandle xLCDTaskHandle, 
     xTouchTaskHandle, 
     xTerminalTaskHandle , 
-    xBeepTaskHandle;
+    xBeepTaskHandle, 
+    xTimerSetupHandle;
 
 
 // Needed by file core_cm3.h
@@ -108,9 +110,12 @@ int main( void )
     vLEDInit();   // set up the LED flash io and tasks
     
     xSerialPortInitMinimal( 9600, 255 );       
-    
+    USART2Init();
     speaker_init();
     
+    // SPI_FLASH_Init(); cant use this ATM because of conflict with
+    // tft Pins
+
     /* Start the tasks defined within this file/specific to this demo. */
     
     //LCD Task starts at high priority, then drops
@@ -142,6 +147,13 @@ int main( void )
                  NULL, 
                  tskIDLE_PRIORITY,
                  &xBeepTaskHandle );
+
+     xTaskCreate( vTimerSetupTask, 
+                 ( signed portCHAR * ) "timer", 
+                 configMINIMAL_STACK_SIZE + 1000, 
+                 NULL, 
+                 tskIDLE_PRIORITY,
+                 &xTimerSetupHandle );
     
     menu_set_root(main_menu);
     
@@ -214,7 +226,7 @@ static void prvSetupHardware( void )
         
 	/* SPI2 Periph clock enable */
 	RCC_APB1PeriphClockCmd( RCC_APB1Periph_SPI2, ENABLE );
-
+        RCC_APB1PeriphClockCmd( RCC_APB1Periph_TIM3, ENABLE );
 
 	/* Set the Vector Table base address at 0x08000000 */
 	NVIC_SetVectorTable( NVIC_VectTab_FLASH, 0x0 );

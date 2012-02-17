@@ -30,7 +30,7 @@ void _exit(int i);
 int _open(const char *name, int flags, int mode);
 int _read(int file, char *ptr, int len);
 int _write(int file, char *buffer, unsigned int count);
- int _lseek(int file, int ptr, int dir);
+int _lseek(int file, int ptr, int dir);
 int _fstat(int file, struct stat *st);
 int _link(char *old, char *new);
 int _unlink(char *name);
@@ -67,7 +67,8 @@ int _write(int file, char *buffer, unsigned int count)
 	register int i;
 	for (i=0; i<count; ++i) {
             //putChar(*buffer++);
-            xSerialPutChar(NULL, *buffer++, 0);
+            comm_put(*buffer++);
+            //xSerialPutChar(NULL, *buffer++, 0);
 	}
 
 	return count;

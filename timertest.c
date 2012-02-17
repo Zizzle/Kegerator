@@ -136,39 +136,39 @@ NVIC_InitTypeDef NVIC_InitStructure;
 
 void TIM2_IRQHandler( void )
 {
-static unsigned portSHORT usLastCount = 0, usSettleCount = 0, usMaxDifference = 0;
-unsigned portSHORT usThisCount, usDifference;
-
-	/* Capture the free running timer 3 value as we enter the interrupt. */
-	usThisCount = TIM3->CNT;
-	
-	if( usSettleCount >= timerSETTLE_TIME )
+    static unsigned portSHORT usLastCount = 0, usSettleCount = 0, usMaxDifference = 0;
+    unsigned portSHORT usThisCount, usDifference;
+    
+    /* Capture the free running timer 3 value as we enter the interrupt. */
+    usThisCount = TIM3->CNT;
+    
+    if( usSettleCount >= timerSETTLE_TIME )
+    {
+        /* What is the difference between the timer value in this interrupt
+           and the value from the last interrupt. */
+        usDifference = usThisCount - usLastCount;
+        
+        /* Store the difference in the timer values if it is larger than the
+           currently stored largest value.  The difference over and above the
+           expected difference will give the 'jitter' in the processing of these
+           interrupts. */
+        if( usDifference > usMaxDifference )
+        {
+            usMaxDifference = usDifference;
+            usMaxJitter = usMaxDifference - timerEXPECTED_DIFFERENCE_VALUE;
+        }
+    }
+    else
 	{
-		/* What is the difference between the timer value in this interrupt
-		and the value from the last interrupt. */
-		usDifference = usThisCount - usLastCount;
-
-		/* Store the difference in the timer values if it is larger than the
-		currently stored largest value.  The difference over and above the
-		expected difference will give the 'jitter' in the processing of these
-		interrupts. */
-		if( usDifference > usMaxDifference )
-		{
-			usMaxDifference = usDifference;
-			usMaxJitter = usMaxDifference - timerEXPECTED_DIFFERENCE_VALUE;
-		}
+            /* Don't bother storing any values for the first couple of
+               interrupts. */
+            usSettleCount++;
 	}
-	else
-	{
-		/* Don't bother storing any values for the first couple of
-		interrupts. */
-		usSettleCount++;
-	}
-
-	/* Remember what the timer value was this time through, so we can calculate
-	the difference the next time through. */
-	usLastCount = usThisCount;
-
+    
+    /* Remember what the timer value was this time through, so we can calculate
+       the difference the next time through. */
+    usLastCount = usThisCount;
+    
     TIM_ClearITPendingBit( TIM2, TIM_IT_Update );
 }
 

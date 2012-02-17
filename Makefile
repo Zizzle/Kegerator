@@ -97,8 +97,9 @@ SOURCE=	main.c 	lcd.c \
 		leds.c \
 		console.c \
 		menu.c \
-		speaker.c
-
+		speaker.c \
+		timer.c \
+		SPI_Flash_ST_Eval.c
 # ST Library source files.
 ST_LIB_SOURCE= \
 		$(ARM_CMSIS_DIR)/core_cm3.c \

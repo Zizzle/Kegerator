@@ -259,9 +259,50 @@ void USART1_IRQHandler( void )
     portEND_SWITCHING_ISR( xHigherPriorityTaskWoken );
 }
 
+//------------------------------------------------------------------
+// USART 2 TEST
+//----------------------------------------------------------------
+
+
+#define USARTx USART2
+
+int comm_test(void)
+{
+        return ( USART_GetFlagStatus(USARTx, USART_FLAG_RXNE) == RESET ) ? 0 : 1;
+}
+
+char comm_get(void)
+{
+        while(USART_GetFlagStatus(USARTx, USART_FLAG_RXNE) == RESET) { ; }
+        return (char)USART_ReceiveData(USARTx);
+}
+
+void comm_put(char d)
+{
+        while(USART_GetFlagStatus(USARTx, USART_FLAG_TXE) == RESET) { ; }
+        USART_SendData(USARTx, (uint16_t)d);
+}
+
+void comm_puts(const char* s)
+{
+        char c;
+        while ( ( c = *s++) != '\0' ) {
+                comm_put(c);
+        }
+}
+
+void comm_init (void)
+{
+        // already done in main.c
+}
+
+
+
 void USART2Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
+        
+
 	USART_InitTypeDef USART_InitStructure;
 	USART_ClockInitTypeDef  USART_ClockInitStructure;
 	//enable bus clocks
@@ -278,15 +319,33 @@ void USART2Init(void)
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-	USART_ClockStructInit(&USART_ClockInitStructure);
-	 USART_ClockInit(USART2, &USART_ClockInitStructure);
-	USART_StructInit(&USART_InitStructure);
-	//Configure USART2 basic and asynchronous paramters
-	USART_Init(USART2, &USART_InitStructure);
-	//Enable USART2
-	USART_Cmd(USART2, ENABLE);
-}
+ /* USART1 and USART2 configuration ------------------------------------------------------*/
+        /* USART and USART2 configured as follow:
+         - BaudRate = 19200 baud
+         - Word Length = 8 Bits
+         - One Stop Bit
+         - No parity
+         - Hardware flow control disabled (RTS and CTS signals)
+         - Receive and transmit enabled
+        */
+        USART_InitStructure.USART_BaudRate = 115200;
+        USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+        USART_InitStructure.USART_StopBits = USART_StopBits_1;
+        USART_InitStructure.USART_Parity = USART_Parity_No;
+        USART_InitStructure.USART_HardwareFlowControl =USART_HardwareFlowControl_None;
+        USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
 
+        /* Configure USART2 */
+        USART_Init(USART2, &USART_InitStructure);
+        
+        /* Enable the USART1 */
+        USART_Cmd(USART2, ENABLE);
+        
+        comm_puts("TEST\r\n");
+        
+
+
+}
 
 
 

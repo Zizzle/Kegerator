@@ -39,8 +39,9 @@ void speaker_init(void)
 
 static void beep( unsigned portBASE_TYPE len){
     unsigned portBASE_TYPE jj;
-    for (jj= 0; jj < len; jj++){
-        
+
+    for (jj= 0; jj < len; jj++)
+    {
         GPIO_WriteBit( GPIOE, GPIO_Pin_0,1 );           
         vTaskDelay(1);
         GPIO_WriteBit( GPIOE, GPIO_Pin_0,0 );

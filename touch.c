@@ -16,6 +16,8 @@
 #include "menu.h"
 #include "console.h"
 #include "speaker.h"
+#include "timer.h"
+
 #define CH_X  0xd0//0x90
 #define CH_Y  0x90//0xd0
 
@@ -254,21 +256,24 @@ u16 Dy(u16 yy)
   return (_AD2Y(yy));
 }
 */
+// Set duty cycle when using TIM3 as a PWM output.
+
 void vTouchTask( void *pvParameters ) 
 {
     Touch_Initializtion();
     portTickType xLastExecutionTime = xTaskGetTickCount();
     portTickType xTicksToWait = 1000/portTICK_RATE_MS;
     portBASE_TYPE xStatus;
+    extern portBASE_TYPE usMaxJitter;
     unsigned int x = 0, y = 0, beep = TOUCH_BEEP; // current x,y value
-    static unsigned int lx = 0, ly = 0; //place to store the last
+    static unsigned int lx = 0, ly = 0, xx = 0x0000; //place to store the last
                                         //value of x and y for sending
                                         //to the menu
 
     portBASE_TYPE sense, changed;
     static portBASE_TYPE last;
-//    char buf[50];
-        
+    uint32_t id = 0;
+    unsigned char b1 = 0, b2 = 0;
     
  
     for (;;)
@@ -286,14 +291,24 @@ void vTouchTask( void *pvParameters )
             sense  = 1;
         changed = sense ^ last;
         
-//sprintf(buf, "last %d, sense %d, changed %d\r\n", last, sense,changed );
-//xStatus = xQueueSendToBack( xConsoleQueue, &buf, xTicksToWait );   
+
 
         // do we have negative edge of touch
         if ((changed==1) && (sense==0))
         {
             menu_key(lx, ly);    
             xQueueSend(xBeepQueue, &beep, 0);
+            // SPI_FLASH_Init();
+            // SPI_FLASH_WriteEnable();
+            // b1 = SPI_FLASH_SendByte(0xA3);
+            // b2 = SPI_FLASH_SendByte(0xA3);
+            //SPI_FLASH_StartReadSequence(0x0);
+            //id =  SPI_FLASH_ReadID();
+            //SPI_FLASH_BufferRead(buf1, 0x00, 50);
+            SetTIM3Duty(xx+=100);
+            printf("%x\r\n",TIM3->CCR3 );
+            // sprintf(buf, "%u %u jittervar\r\n", usMaxJitter, TIM2->CNT );
+//xStatus = xQueueSendToBack( xConsoleQueue, &buf, xTicksToWait );   
         }
         //save static variables
         last = sense; 
