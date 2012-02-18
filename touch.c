@@ -305,7 +305,8 @@ void vTouchTask( void *pvParameters )
             //SPI_FLASH_StartReadSequence(0x0);
             //id =  SPI_FLASH_ReadID();
             //SPI_FLASH_BufferRead(buf1, 0x00, 50);
-            SetTIM3Duty(xx+=100);
+            x = 30;
+            SetTIM3Duty(xx+=1);
             printf("%x\r\n",TIM3->CCR3 );
             // sprintf(buf, "%u %u jittervar\r\n", usMaxJitter, TIM2->CNT );
 //xStatus = xQueueSendToBack( xConsoleQueue, &buf, xTicksToWait );   
