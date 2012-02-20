@@ -24,6 +24,8 @@ void          vTaskDS1820Conversion( void *pvParameters );
 void          ds1820_convert(void);
 uint8_t       ds1820_one_device_get_temp(void);
 uint8_t       ds1820_search(void);
-uint8_t         ds1820_get_temp(uint8_t * rom_code);
+uint8_t       ds1820_get_temp(uint8_t * rom_code);
 float         ds1820_read_device(uint8_t * rom_code);
+void          ds1820_search_applet(void);
+void          ds1820_search_key(uint16_t x, uint16_t y);
 #endif

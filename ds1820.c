@@ -10,6 +10,8 @@
 #include "ds1820.h"
 #include "queue.h"
 #include "console.h"
+#include "lcd.h"
+
 
 // ROM COMMANDS
 #define MATCH_ROM	0x55
@@ -72,7 +74,7 @@ void vTaskDS1820Conversion( void *pvParameters ){
     if (ds1820_reset() ==PRESENCE_ERROR)
     {
         sprintf(buf, "NO SENSOR DETECTED\r\n");
-        xQueueSendToBack(xConsoleQueue, &buf, 0);
+        xQueueSendToBack(xConsoleQueue, &buf, 1000);
         vTaskDelete(NULL); // if this task fails... delete it
     }
     for (;;)
@@ -138,7 +140,9 @@ unsigned char ds1820_reset(void)
     delay_us(30);
     if (DQ_READ()!= 0)
     {
+        portEXIT_CRITICAL();
         return PRESENCE_ERROR;
+       
     }
     portEXIT_CRITICAL();
     DQ_OUT();
@@ -230,10 +234,7 @@ void ds1820_convert(void){
     ds1820_write_byte(SKIP_ROM); 
     ds1820_write_byte(CONVERT_TEMP);
     DQ_IN();
-    while(DQ_READ()==0){
-        printf("waiting for conversion\r\n");
-        delay_us(500);
-    }
+       
 }
  
 uint8_t ds1820_one_device_get_temp(void){
@@ -268,6 +269,14 @@ uint8_t ds1820_search(){
     }
     portEXIT_CRITICAL();
     ds1820_reset();
+    /*
+    printf("DS1820 ROM CODE: MSB->"); 
+    for (ii = 7; ii >= 0 ; ii--)
+    {
+        printf("%x", rom[ii]);
+    }
+    printf("<-LSB\r\n"); 
+    */
 }
 
 
@@ -298,3 +307,80 @@ float ds1820_read_device(uint8_t * rom_code){
     retval = ((float)ds1820_temperature1/100);
     return retval;
 }
+
+void ds1820_search_applet(void)
+{
+    lcd_clear(Black);
+   
+    lcd_PutString(0, 0, "DS1820 SEARCH", Blue, Black);
+    lcd_PutString(0, 20, "ROM CODE", Blue, Black);
+    lcd_draw_buttons();
+}
+
+void ds1820_search_key(uint16_t x, uint16_t y){
+ uint16_t window = 0;
+ char code[30];   
+float sensor_temp = 0.00;
+ static uint16_t last_window = 0; 
+    
+    if (touchIsInWindow(x,y, 0,0, 150,50) == pdTRUE)
+        window = 0;
+    
+    else  if (touchIsInWindow(x,y, 0,50, 150,100) == pdTRUE)
+        window = 1;
+    
+    
+    else  if (touchIsInWindow(x,y, 0,100, 150,150) == pdTRUE)
+        window = 2;
+
+    
+    else  if (touchIsInWindow(x,y, 0,150, 150,200) == pdTRUE)
+        window = 3;
+    
+    else  if (touchIsInWindow(x,y, 0,200, 150,250) == pdTRUE)
+        window = 4;
+    
+    
+    else  if (touchIsInWindow(x,y, 0,250, 150,300) == pdTRUE)
+        window = 5;
+    
+    else  if (touchIsInWindow(x,y, 160, 0, 230,100) == pdTRUE)
+        window = 6;
+
+    else  if (touchIsInWindow(x,y, 160, 100, 230,200) == pdTRUE)
+        window = 7;
+
+    else  if (touchIsInWindow(x,y, 160, 200, 230,300) == pdTRUE)
+        window = 8;
+    else window = 255;
+
+    
+    //Back Button
+    if (window == 6)
+    {
+       
+      
+    }
+  
+    else if (window == 7){
+        
+        ds1820_search();
+        if (rom[0] == 0x10)    
+            sprintf(code, "%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x",rom[0], 
+                    rom[1], rom[2], rom[3], rom[4], rom[5], rom[6], rom[7]);
+        else sprintf(code, "NO SENSOR"); 
+        lcd_PutString(0, 40, code, Blue, Black);
+        
+  
+    }
+    
+    else if (window == 8){
+        sensor_temp = ds1820_read_device(rom);
+        sprintf(code, "Current Sensor = %.2f", sensor_temp);
+        lcd_PutString(0, 60, code, Blue, Black);
+       
+
+    }
+
+}
+

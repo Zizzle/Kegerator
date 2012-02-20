@@ -65,12 +65,12 @@ struct menu foo_menu[] =
     {NULL, NULL, NULL, NULL}
 };
 
-struct menu bar_menu[] =
+struct menu diag_menu[] =
 {
-    {"Test1",    NULL,     NULL, NULL}, 
-    {"Test2",    NULL,     NULL, NULL},
-    {"Test3",    NULL,     NULL, NULL},
-    {"Test4",    NULL,     NULL, NULL},
+    {"Get DS1820 ROM",    NULL, ds1820_search_applet, ds1820_search_key}, 
+    {"Diag2",    NULL,     NULL, NULL},
+    {"Diag3",    NULL,     NULL, NULL},
+    {"Diag4",    NULL,     NULL, NULL},
     {NULL, NULL, NULL, NULL}
 };
 
@@ -87,7 +87,7 @@ struct menu manual_menu[] =
 struct menu main_menu[] =
 {
     {"Manual Control",       manual_menu,      NULL, NULL},
-    {"Main2",       bar_menu,  NULL, NULL},
+    {"Diagnostics",   diag_menu,  NULL, NULL},
     {"Main3",       NULL,      NULL, NULL},
     {"Main4",       foo_menu,  NULL, NULL},
     {"Main5",       NULL,      NULL, NULL},
@@ -122,9 +122,11 @@ int main( void )
     vLEDInit();   // set up the LED flash io and tasks
     
     xSerialPortInitMinimal( 9600, 255 );       
+
     USART2Init();
    
     speaker_init();
+
     vCraneInit();
 
         
