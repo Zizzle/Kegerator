@@ -17,6 +17,7 @@
 #include "queue.h"
 #include "lcd.h"
 #include "console.h"
+#include "crane.h"
 #define HEIGHT 6
 
 
@@ -145,7 +146,12 @@ void menu_key(uint16_t x, uint16_t y)
         menu_run_callback();
         return;
     }
-   
+  
+    if (window == 7){
+  
+  
+    }
+  
     if (window < 6)
     {
        

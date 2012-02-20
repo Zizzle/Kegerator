@@ -23,6 +23,7 @@
 #include "stm32f10x.h"
 #include "leds.h"
 #include <stdio.h>
+#include "ds1820.h"
 
 static unsigned portSHORT usOutputValue = 0;
 
@@ -76,7 +77,7 @@ void vStartupLEDTask ( void *pvParameters ) {
     
     xTaskCreate( vLEDFlashTask, 
                  ( signed portCHAR * ) "LEDf",
-                 configMINIMAL_STACK_SIZE,
+                 configMINIMAL_STACK_SIZE ,
                  NULL,
                  tskIDLE_PRIORITY+2,
                  NULL);
@@ -98,9 +99,10 @@ void vLEDFlashTask( void *pvParameters )
     portTickType xLastExecutionTime = xTaskGetTickCount();
     for (;;)
     {
-        vTaskDelayUntil( &xLastExecutionTime, 500/portTICK_RATE_MS ); 
+
+        vTaskDelayUntil( &xLastExecutionTime, 1000/portTICK_RATE_MS ); 
         vLEDToggle( D4_PORT, D4_PIN );
-        //    printf("LedFlash HWM = %d\r\n", uxTaskGetStackHighWaterMark(NULL));
+             
         taskYIELD();
     }
     

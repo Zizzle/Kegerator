@@ -100,7 +100,7 @@ void vSetupTimerTest( void )
     // TIM_ITConfig( TIM3, TIM_IT_Update, ENABLE );
     
     /* Finally, enable both timers. */
-    TIM_Cmd( TIM3, ENABLE );
+    /* TIM_Cmd( TIM3, ENABLE ); */
  
   
 

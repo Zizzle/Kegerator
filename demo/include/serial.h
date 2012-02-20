@@ -121,5 +121,6 @@ portBASE_TYPE xSerialWaitForSemaphore( xComPortHandle xPort );
 void vSerialClose( xComPortHandle xPort );
 void UART2Init(void);
 void comm_put(char d);
+void comm_puts(const char* s);
 #endif
 

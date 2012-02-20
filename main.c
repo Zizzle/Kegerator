@@ -26,6 +26,8 @@
 #include "menu.h" 
 #include "speaker.h"
 #include "timer.h"
+#include "crane.h"
+#include "ds1820.h"
 /*-----------------------------------------------------------*/
 
 /* The period of the system clock in nano seconds.  This is used to calculate
@@ -72,9 +74,19 @@ struct menu bar_menu[] =
     {NULL, NULL, NULL, NULL}
 };
 
+struct menu manual_menu[] =
+{
+    {"Manual Crane",   NULL, manual_crane_applet, manual_crane_key},
+    {"Crane",    NULL,     NULL, NULL}, 
+    {"Test2",    NULL,     NULL, NULL},
+    {"Test3",    NULL,     NULL, NULL},
+    {"Test4",    NULL,     NULL, NULL},
+    {NULL, NULL, NULL, NULL}
+};
+
 struct menu main_menu[] =
 {
-    {"Main1",       NULL,      NULL, NULL},
+    {"Manual Control",       manual_menu,      NULL, NULL},
     {"Main2",       bar_menu,  NULL, NULL},
     {"Main3",       NULL,      NULL, NULL},
     {"Main4",       foo_menu,  NULL, NULL},
@@ -111,9 +123,14 @@ int main( void )
     
     xSerialPortInitMinimal( 9600, 255 );       
     USART2Init();
+   
     speaker_init();
+    vCraneInit();
+
+        
     
-    // SPI_FLASH_Init(); cant use this ATM because of conflict with
+        
+// SPI_FLASH_Init(); cant use this ATM because of conflict with
     // tft Pins
 
     /* Start the tasks defined within this file/specific to this demo. */
@@ -148,13 +165,14 @@ int main( void )
                  tskIDLE_PRIORITY,
                  &xBeepTaskHandle );
 
-     xTaskCreate( vTimerSetupTask, 
-                 ( signed portCHAR * ) "timer", 
-                 configMINIMAL_STACK_SIZE + 1000, 
+   
+    xTaskCreate( vTaskDS1820Conversion, 
+                 ( signed portCHAR * ) "DS1820", 
+                 configMINIMAL_STACK_SIZE + 500, 
                  NULL, 
                  tskIDLE_PRIORITY,
                  &xTimerSetupHandle );
-    
+   
     menu_set_root(main_menu);
     
     /* Start the scheduler. */

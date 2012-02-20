@@ -291,10 +291,7 @@ void comm_puts(const char* s)
         }
 }
 
-void comm_init (void)
-{
-        // already done in main.c
-}
+
 
 
 
@@ -321,7 +318,7 @@ void USART2Init(void)
 
  /* USART1 and USART2 configuration ------------------------------------------------------*/
         /* USART and USART2 configured as follow:
-         - BaudRate = 19200 baud
+         - BaudRate = 115200 baud
          - Word Length = 8 Bits
          - One Stop Bit
          - No parity
