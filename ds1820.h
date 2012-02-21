@@ -16,16 +16,22 @@
 #define PRESENCE_ERROR 0xFD
 #define NO_ERROR       0x00
 
+// DS1820 Sensor defines: Use these macro's when calling ds1820_get_temp()
+#define HLT 0
+#define MASH 1
+#define CABINET 2
+#define AMBIENT 3
+#define SPARE 4
+
+//Scheduled task for FreeRTOS
+void          vTaskDS1820Convert( void *pvParameters ); //task to
+
+//get temp of a particular sensor
+float         ds1820_get_temp(unsigned char sensor);
 
 
-void          ds1820_init(void);
-unsigned char ds1820_reset(void);
-void          vTaskDS1820Conversion( void *pvParameters );
-void          ds1820_convert(void);
-uint8_t       ds1820_one_device_get_temp(void);
-uint8_t       ds1820_search(void);
-uint8_t       ds1820_get_temp(uint8_t * rom_code);
-float         ds1820_read_device(uint8_t * rom_code);
+//Menu functions
 void          ds1820_search_applet(void);
 void          ds1820_search_key(uint16_t x, uint16_t y);
+void          ds1820_display_temps(void);
 #endif

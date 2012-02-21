@@ -7,6 +7,8 @@
 #include "task.h"
 #include "stm32f10x.h"
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include "ds1820.h"
 #include "queue.h"
 #include "console.h"
@@ -42,10 +44,23 @@
 #define DQ_RESET() GPIO_ResetBits(DS1820_PORT, DS1820_PIN)
 #define DQ_READ()  GPIO_ReadInputDataBit(DS1820_PORT, DS1820_PIN)
 
+// STATIC FUNCTIONS
+static void ds1820_convert(void);
+static void ds1820_init(void);
+static unsigned char ds1820_reset(void);
+static void ds1820_write_bit(uint8_t bit);
+static uint8_t ds1820_read_bit(void);
+static void ds1820_write_byte(uint8_t byte);
+static uint8_t ds1820_read_byte(void);
+static void ds1820_convert(void);
+static uint8_t ds1820_search();
+static float ds1820_read_device(uint8_t * rom_code);
+
+
 uint8_t sp[9]; //scratchpad
 uint8_t sp1[9]; //scratchpad
 int16_t ds1820_temperature = 0;
-//int16_t ds1820_temperature1 = 0;
+
 uint8_t rom[8];
 
 static void delay_us(uint16_t count){ 
@@ -61,15 +76,32 @@ static void delay_us(uint16_t count){
 }
 
 
-#define HERMS_TEMP_SENSOR "\x10\x9c\xa4\x1e\x02\x08\x00\xf"
+#define HLT_TEMP_SENSOR "\x10\x9c\xa4\x1e\x02\x08\x00\xf"
 #define MASH_TEMP_SENSOR "\x10\xe3\x9b\x1e\x02\x08\x00\x58"
+#define CABINET_TEMP_SENSOR "\x10\xe3\x9b\x1e\x02\x08\x00\x58"
+#define AMBIENT_TEMP_SENSOR "\x10\xe3\x9b\x1e\x02\x08\x00\x58"
 
+char * b[5];
 
-
-void vTaskDS1820Conversion( void *pvParameters ){
+void vTaskDS1820Convert( void *pvParameters ){
     char buf[30];
     int ii = 0;
-    float temp; 
+    float mash_temp, hlt_temp, cabinet_temp, ambient_temp; 
+
+    // Allocate memory for sensors
+    b[HLT] = (char *) malloc (sizeof(rom)+1);
+    b[MASH] = (char *) malloc (sizeof(rom)+1);
+    b[CABINET] = (char *) malloc (sizeof(rom)+1);
+    b[AMBIENT] = (char *) malloc (sizeof(rom)+1);
+    b[SPARE] = (char *) malloc (sizeof(rom)+1);
+    
+    // Copy default values
+    memcpy(b[HLT], HLT_TEMP_SENSOR, sizeof(HLT_TEMP_SENSOR)+1);
+    memcpy(b[MASH], MASH_TEMP_SENSOR, sizeof(MASH_TEMP_SENSOR)+1);
+    memcpy(b[CABINET], CABINET_TEMP_SENSOR, sizeof(CABINET_TEMP_SENSOR)+1);
+    memcpy(b[AMBIENT], AMBIENT_TEMP_SENSOR, sizeof(AMBIENT_TEMP_SENSOR)+1);  
+
+    // initialise the bus
     ds1820_init();
     if (ds1820_reset() ==PRESENCE_ERROR)
     {
@@ -77,31 +109,36 @@ void vTaskDS1820Conversion( void *pvParameters ){
         xQueueSendToBack(xConsoleQueue, &buf, 1000);
         vTaskDelete(NULL); // if this task fails... delete it
     }
+  
+    
     for (;;)
     {
-        //    ds1820_search();
         ds1820_convert();
         vTaskDelay(1000);
-
-        temp = ds1820_read_device(MASH_TEMP_SENSOR);
-//        ds1820_get_temp();
-        //for (ii = 8; ii >= 0; ii--)
-        //    printf("%x ", sp1[ii]);
-        //printf("\r\n");
-        //printf("%.2f\r\n",  ((float)ds1820_temperature1)/100 );
-        //printf("ROM CODE = ");
-        //for (ii = 7; ii >= 0; ii--){
-        //    printf("%x ", rom[ii]);
-        // }
-        //printf("\r\n");
-        sprintf(buf, "Temperature = %.2fDeg-C\r\n", temp);
-        xQueueSendToBack(xConsoleQueue, &buf, 0);
+        
+        hlt_temp = ds1820_read_device(b[HLT]);
+        mash_temp = ds1820_read_device(b[MASH]);
+        cabinet_temp = ds1820_read_device(b[CABINET]);
+        ambient_temp = ds1820_read_device(b[AMBIENT]);
+        
+        // Uncomment below to send temps to the console
+        /*
+        sprintf(buf, "HLT Temp = %.2fDeg-C\r\n", hlt_temp);
+        xQueueSendToBack(xConsoleQueue, &buf, 100);
+        sprintf(buf, "Mash Temp = %.2fDeg-C\r\n", mash_temp);
+        xQueueSendToBack(xConsoleQueue, &buf, 100);
+        sprintf(buf, "Cabinet Temp = %.2fDeg-C\r\n", cabinet_temp);
+        xQueueSendToBack(xConsoleQueue, &buf, 100);
+        sprintf(buf, "Ambient Temp = %.2fDeg-C\r\n", ambient_temp);
+        xQueueSendToBack(xConsoleQueue, &buf, 100);
+        */
+        
         taskYIELD();
     }
     
 }
 
-void ds1820_init(void) {
+static void ds1820_init(void) {
     // intialise timer 2 for counting 
     TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
@@ -128,7 +165,7 @@ void ds1820_init(void) {
 
 
 
-unsigned char ds1820_reset(void)
+static unsigned char ds1820_reset(void)
 {
     portENTER_CRITICAL();
     DQ_OUT();
@@ -154,7 +191,7 @@ unsigned char ds1820_reset(void)
 }
 
 
-void ds1820_write_bit(uint8_t bit){
+static void ds1820_write_bit(uint8_t bit){
 
     DQ_OUT();
     DQ_SET(); // make sure bus is high
@@ -170,7 +207,7 @@ void ds1820_write_bit(uint8_t bit){
     DQ_IN(); // return bus
 }
 
-uint8_t ds1820_read_bit(){
+static uint8_t ds1820_read_bit(void){
     uint8_t bit;
     delay_us(1);
     DQ_OUT();
@@ -190,7 +227,7 @@ uint8_t ds1820_read_bit(){
     else return 0; 
 }
 
-void ds1820_write_byte(uint8_t byte){
+static void ds1820_write_byte(uint8_t byte){
 
     delay_us(100);
     portENTER_CRITICAL();
@@ -210,7 +247,7 @@ void ds1820_write_byte(uint8_t byte){
    portEXIT_CRITICAL();
 }
 
-uint8_t ds1820_read_byte(void){
+static uint8_t ds1820_read_byte(void){
     int ii;
     uint8_t bit, byte = 0;
     portENTER_CRITICAL();
@@ -229,13 +266,19 @@ uint8_t ds1820_read_byte(void){
     return byte;
 }
 
-void ds1820_convert(void){
+static void ds1820_convert(void){
     ds1820_reset();
     ds1820_write_byte(SKIP_ROM); 
     ds1820_write_byte(CONVERT_TEMP);
     DQ_IN();
        
 }
+
+float ds1820_get_temp(unsigned char sensor){
+
+    return ds1820_read_device(b[sensor]);
+}
+                              
  
 uint8_t ds1820_one_device_get_temp(void){
     int ii;
@@ -258,8 +301,9 @@ uint8_t ds1820_one_device_get_temp(void){
     
 }
 
-uint8_t ds1820_search(){
-    uint8_t b1=0, b2=0,b3= 0, b4 = 0, a=0, ii, jj;
+static uint8_t ds1820_search(){
+    uint8_t ii;
+    char console_text[30];
     // ds1820_reset();
     ds1820_reset();
     ds1820_write_byte(READ_ROM); 
@@ -269,6 +313,8 @@ uint8_t ds1820_search(){
     }
     portEXIT_CRITICAL();
     ds1820_reset();
+    sprintf(console_text, "Sensor search complete\r\n\0");
+    xQueueSendToBack(xConsoleQueue, &console_text, 0);
     /*
     printf("DS1820 ROM CODE: MSB->"); 
     for (ii = 7; ii >= 0 ; ii--)
@@ -281,7 +327,7 @@ uint8_t ds1820_search(){
 
 
 
-float ds1820_read_device(uint8_t * rom_code){
+static float ds1820_read_device(uint8_t * rom_code){
     float retval;
     uint16_t ds1820_temperature1 = 10000;
     uint8_t ii; 
@@ -311,17 +357,29 @@ float ds1820_read_device(uint8_t * rom_code){
 void ds1820_search_applet(void)
 {
     lcd_clear(Black);
-   
-    lcd_PutString(0, 0, "DS1820 SEARCH", Blue, Black);
-    lcd_PutString(0, 20, "ROM CODE", Blue, Black);
-    lcd_draw_buttons();
+    
+    lcd_PutString(2, 3, "Get ROM code from\0 ", Blue, Black);
+    lcd_PutString(2, 19, "Current DS1820\0 ", Blue, Black);
+    lcd_PutString(2, 35, "(One at a time!)\0", Blue, Black);
+    lcd_PutString(2, 53, "Display the temp\0", Blue, Black);
+    lcd_PutString(2, 69, "of current sensor\0", Blue, Black);
+    char * t1 = "HLT\0";
+    char * t2 = "MASH\0";
+    char * t3 = "CABINET\0";
+    char * t4 = "AMBIENT\0";
+    lcd_DrawRect(160, 0, 230, 100, Red);
+    lcd_PutString(179, 46, "BACK\0", Red, Black); 
+    lcd_draw_applet_options(t1, t2, t3, t4);
+    
 }
 
 void ds1820_search_key(uint16_t x, uint16_t y){
- uint16_t window = 0;
- char code[30];   
-float sensor_temp = 0.00;
- static uint16_t last_window = 0; 
+    uint16_t window = 255;
+    char code[30];   
+    char lcd_string[30];
+    char console[100];
+    float sensor_temp = 0.00;
+    static uint16_t last_window = 0; 
     
     if (touchIsInWindow(x,y, 0,0, 150,50) == pdTRUE)
         window = 0;
@@ -330,57 +388,117 @@ float sensor_temp = 0.00;
         window = 1;
     
     
-    else  if (touchIsInWindow(x,y, 0,100, 150,150) == pdTRUE)
+    else if (touchIsInWindow(x,y, 0,140, 120,220) == pdTRUE)
         window = 2;
-
     
-    else  if (touchIsInWindow(x,y, 0,150, 150,200) == pdTRUE)
+    else  if (touchIsInWindow(x,y, 120,140, 239,220) == pdTRUE)
         window = 3;
     
-    else  if (touchIsInWindow(x,y, 0,200, 150,250) == pdTRUE)
+    
+    else  if (touchIsInWindow(x,y, 0,220, 120,300) == pdTRUE)
         window = 4;
     
     
-    else  if (touchIsInWindow(x,y, 0,250, 150,300) == pdTRUE)
+    else  if (touchIsInWindow(x,y, 120,220, 239,300) == pdTRUE)
         window = 5;
+    
     
     else  if (touchIsInWindow(x,y, 160, 0, 230,100) == pdTRUE)
         window = 6;
-
-    else  if (touchIsInWindow(x,y, 160, 100, 230,200) == pdTRUE)
-        window = 7;
-
-    else  if (touchIsInWindow(x,y, 160, 200, 230,300) == pdTRUE)
-        window = 8;
-    else window = 255;
-
     
     //Back Button
     if (window == 6)
     {
-       
-      
+     
+        
     }
-  
-    else if (window == 7){
+ 
+    else if (window == 0){
         
         ds1820_search();
         if (rom[0] == 0x10)    
-            sprintf(code, "%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x",rom[0], 
+            sprintf(code, "%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x\0",rom[0], 
                     rom[1], rom[2], rom[3], rom[4], rom[5], rom[6], rom[7]);
-        else sprintf(code, "NO SENSOR"); 
-        lcd_PutString(0, 40, code, Blue, Black);
+        else sprintf(code, "NO SENSOR\0"); 
+        lcd_PutString(2, 101, code, Blue, Black);
         
   
     }
     
-    else if (window == 8){
+    else if (window == 1){
         sensor_temp = ds1820_read_device(rom);
-        sprintf(code, "Current Sensor = %.2f", sensor_temp);
-        lcd_PutString(0, 60, code, Blue, Black);
-       
-
+        sprintf(code, "Current Sensor = %.2f\0", sensor_temp);
+        lcd_PutString(2, 117, code, Blue, Black);
+        
+        
     }
-
+    else if (window == 2){
+        
+        if (rom[0] == 0x10)  {
+           
+            memcpy(b[HLT], rom, sizeof(rom)+1);
+            sprintf(lcd_string, "COPIED\0"); 
+            sprintf(console, "%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x\r\n Assigned to HLT\r\n",rom[0], 
+                    rom[1], rom[2], rom[3], rom[4], rom[5], rom[6], rom[7]);
+            xQueueSendToBack(xConsoleQueue, &console, 0);
+        }
+        else sprintf(lcd_string, "NO SENSOR TO COPY\0"); 
+        lcd_PutString(2, 160, lcd_string, Blue, Black);
+        
+    }
+    else if (window == 3){
+       
+        if (rom[0] == 0x10)  {  
+            memcpy(b[MASH], rom, sizeof(rom)+1);
+            
+            sprintf(lcd_string, "COPIED\0"); 
+            sprintf(console, "%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x\r\n Assigned to MASH\r\n",rom[0], 
+                    rom[1], rom[2], rom[3], rom[4], rom[5], rom[6], rom[7]);
+            xQueueSendToBack(xConsoleQueue, &console, 0);
+        }
+        else sprintf(lcd_string, "NO SENSOR TO COPY\0"); 
+        lcd_PutString(121, 160, lcd_string, Blue, Black);
+        
+    }
+    else if (window == 4){
+        if (rom[0] == 0x10)  {  
+             memcpy(b[CABINET], rom, sizeof(rom)+1);
+             sprintf(lcd_string, "COPIED\0"); 
+             sprintf(console, "%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x\r\n Assigned to CABINET\r\n",rom[0], 
+                     rom[1], rom[2], rom[3], rom[4], rom[5], rom[6], rom[7]);
+             xQueueSendToBack(xConsoleQueue, &console, 0);
+        }
+        else sprintf(lcd_string, "NO SENSOR TO COPY\0"); 
+        lcd_PutString(2, 250, lcd_string, Blue, Black);
+    }
+    
+    else if (window == 5){
+        if (rom[0] == 0x10)  {
+            memcpy(b[AMBIENT], rom, sizeof(rom)+1);  
+            sprintf(lcd_string, "COPIED\0"); 
+            sprintf(console, "%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x\r\n Assigned to AMBIENT\r\n",rom[0], 
+                    rom[1], rom[2], rom[3], rom[4], rom[5], rom[6], rom[7]);
+            xQueueSendToBack(xConsoleQueue, &console, 0);
+        }
+        else sprintf(code, "NO SENSOR TO COPY\0"); 
+        lcd_PutString(121, 250, lcd_string, Blue, Black);
+        
+    }
+    
 }
+void  ds1820_display_temps(void){
 
+    char lcd_string[20];
+    
+    lcd_clear(Black);
+    lcd_draw_back_button();
+    lcd_PutString(1,1, "TEMPERATURES", Blue, Black);
+    sprintf(lcd_string, "HLT = %.2f\0", ds1820_get_temp(HLT));
+    lcd_PutString(1,40, lcd_string, Green, Black);
+    sprintf(lcd_string, "Mash = %.2f\0", ds1820_get_temp(MASH));
+    lcd_PutString(1,56, lcd_string, Green, Black);
+    sprintf(lcd_string, "Cabinet = %.2f\0", ds1820_get_temp(CABINET));
+    lcd_PutString(1,72, lcd_string, Green, Black);
+    sprintf(lcd_string, "Ambient = %.2f\0", ds1820_get_temp(AMBIENT));
+    lcd_PutString(1,88, lcd_string, Green, Black);
+}

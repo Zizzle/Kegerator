@@ -67,8 +67,8 @@ struct menu foo_menu[] =
 
 struct menu diag_menu[] =
 {
-    {"Get DS1820 ROM",    NULL, ds1820_search_applet, ds1820_search_key}, 
-    {"Diag2",    NULL,     NULL, NULL},
+    {"DS1820 Setup",    NULL, ds1820_search_applet, ds1820_search_key}, 
+    {"DS1820 temps",    NULL, ds1820_display_temps, NULL},
     {"Diag3",    NULL,     NULL, NULL},
     {"Diag4",    NULL,     NULL, NULL},
     {NULL, NULL, NULL, NULL}
@@ -100,7 +100,8 @@ xTaskHandle xLCDTaskHandle,
     xTouchTaskHandle, 
     xTerminalTaskHandle , 
     xBeepTaskHandle, 
-    xTimerSetupHandle;
+    xTimerSetupHandle,
+    xDS1820Handle;
 
 
 // Needed by file core_cm3.h
@@ -148,7 +149,7 @@ int main( void )
     
     xTaskCreate( vTouchTask, 
                  ( signed portCHAR * ) "touch", 
-                 configMINIMAL_STACK_SIZE +1500, 
+                 configMINIMAL_STACK_SIZE +1000, 
                  NULL, 
                  tskIDLE_PRIORITY+2,
                  &xTouchTaskHandle );
@@ -168,12 +169,12 @@ int main( void )
                  &xBeepTaskHandle );
 
    
-    xTaskCreate( vTaskDS1820Conversion, 
+    xTaskCreate( vTaskDS1820Convert, 
                  ( signed portCHAR * ) "DS1820", 
                  configMINIMAL_STACK_SIZE + 500, 
                  NULL, 
                  tskIDLE_PRIORITY,
-                 &xTimerSetupHandle );
+                 &xDS1820Handle );
    
     menu_set_root(main_menu);
     
