@@ -88,11 +88,11 @@ CFLAGS=-g$(DEBUG)\
 
 
 # Source files
+#stm3210e_lcd.c 
 SOURCE=	main.c 	lcd.c \
 		stm32f10x_it.c \
 		stf_syscalls_minimal.c \
 		touch.c \
-		stm3210e_lcd.c \
 		serial.c \
 		leds.c \
 		console.c \
@@ -101,7 +101,9 @@ SOURCE=	main.c 	lcd.c \
 		timer.c \
 		SPI_Flash_ST_Eval.c \
 		crane.c \
-		ds1820.c
+		ds1820.c \
+		images.c \
+		cpu_diag.c
 # ST Library source files.
 ST_LIB_SOURCE= \
 		$(ARM_CMSIS_DIR)/core_cm3.c \

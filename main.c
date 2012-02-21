@@ -17,7 +17,7 @@
 #include "stm32f10x_it.h"
 
 /*app includes. */
-#include "stm3210e_lcd.h"
+//#include "stm3210e_lcd.h"
 #include "LCD_Message.h"
 #include "console.h" 
 #include "leds.h"
@@ -41,29 +41,9 @@ the jitter time in nano seconds. */
  */
 static void prvSetupHardware( void );
 
-unsigned long ulIdleCycleCount = 0UL;
-
-
 /**
  * Configure the menu structures for the App.
  */
-struct menu foo2_menu[] =
-{
-    {"A",    NULL,     NULL, NULL}, 
-    {"B",    NULL,     NULL, NULL},
-    {"C",    NULL,     NULL, NULL},
-    {"D",    NULL,     NULL, NULL},
-    {NULL, NULL, NULL, NULL}
-};
-
-struct menu foo_menu[] =
-{
-    {"Text1",    NULL,     NULL, NULL}, 
-    {"Text2",    NULL,     NULL, NULL},
-    {"Text3",    NULL,     NULL, NULL},
-    {"Text4",    foo2_menu,     NULL, NULL},
-    {NULL, NULL, NULL, NULL}
-};
 
 struct menu diag_menu[] =
 {
@@ -71,26 +51,30 @@ struct menu diag_menu[] =
     {"DS1820 temps",    NULL, ds1820_display_temps, NULL},
     {"Diag3",    NULL,     NULL, NULL},
     {"Diag4",    NULL,     NULL, NULL},
+    {"Diag5",    NULL,     NULL, NULL},
+    {"Diag6",    NULL,     NULL, NULL},
     {NULL, NULL, NULL, NULL}
 };
 
 struct menu manual_menu[] =
 {
     {"Manual Crane",   NULL, manual_crane_applet, manual_crane_key},
-    {"Crane",    NULL,     NULL, NULL}, 
-    {"Test2",    NULL,     NULL, NULL},
-    {"Test3",    NULL,     NULL, NULL},
-    {"Test4",    NULL,     NULL, NULL},
+    {"Man_2",    NULL,     NULL, NULL}, 
+    {"Man_3",    NULL,     NULL, NULL},
+    {"Man_4",    NULL,     NULL, NULL},
+    {"Man_5",    NULL,     NULL, NULL},
+    {"Man_6",    NULL,     NULL, NULL},
     {NULL, NULL, NULL, NULL}
 };
 
 struct menu main_menu[] =
 {
-    {"Manual Control",       manual_menu,      NULL, NULL},
-    {"Diagnostics",   diag_menu,  NULL, NULL},
-    {"Main3",       NULL,      NULL, NULL},
-    {"Main4",       foo_menu,  NULL, NULL},
-    {"Main5",       NULL,      NULL, NULL},
+    {"Manual Control",  manual_menu,   NULL, NULL},
+    {"Diagnostics",     diag_menu,     NULL, NULL},
+    {"Main3",       NULL,    NULL, NULL},
+    {"Main4",       NULL,    NULL, NULL},
+    {"Main5",       NULL,    NULL, NULL},
+    {"Main6",       NULL,    NULL, NULL},
     {NULL, NULL, NULL, NULL}
 };
 
@@ -136,8 +120,7 @@ int main( void )
 // SPI_FLASH_Init(); cant use this ATM because of conflict with
     // tft Pins
 
-    /* Start the tasks defined within this file/specific to this demo. */
-    
+      
     //LCD Task starts at high priority, then drops
     xTaskCreate( vLCDTask, 
                  ( signed portCHAR * ) "LCD", 
@@ -276,11 +259,6 @@ void vApplicationStackOverflowHook( xTaskHandle *pxTask, signed portCHAR *pcTask
 
 /*-----------------------------------------------------------*/
 
-
-void vApplicationIdleHook( void ) 
-{
-    ulIdleCycleCount++;
-}
 
 
 #ifdef DEBUG
