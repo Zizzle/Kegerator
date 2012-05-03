@@ -178,7 +178,8 @@ void ds1820_search_key(uint16_t x, uint16_t y){
      
         
     }
-    
+
+#if 0  // needs to be rewritten to use lcd_printf   
     //get code button
     else if (window == 0){
         
@@ -254,6 +255,7 @@ void ds1820_search_key(uint16_t x, uint16_t y){
         
     }
     
+#endif
 }
 ////////////////////////////////////////////////////////////////////////////
 
@@ -262,18 +264,13 @@ void  ds1820_display_temps(void){
     char lcd_string[20];
     
     lcd_clear(Black);
-    lcd_draw_back_button();
-    lcd_PutString(1,1, "TEMPERATURES", Blue, Black);
+//    lcd_draw_back_button();
+    lcd_printf(1,1, 15, "TEMPERATURES");
   
-    sprintf(lcd_string, "HLT = %.2f\0", ds1820_get_temp(HLT));
-    lcd_PutString(1,40, lcd_string, Green, Black);
-    sprintf(lcd_string, "Mash = %.2f\0", ds1820_get_temp(MASH));
-    lcd_PutString(1,56, lcd_string, Green, Black);
-    sprintf(lcd_string, "Cabinet = %.2f\0", ds1820_get_temp(CABINET));
-    lcd_PutString(1,72, lcd_string, Green, Black);
-    sprintf(lcd_string, "Ambient = %.2f\0", ds1820_get_temp(AMBIENT));
-    lcd_PutString(1,88, lcd_string, Green, Black);
-
+    lcd_printf(1, 40, 20, "HLT = %.2f\0", ds1820_get_temp(HLT));
+    lcd_printf(1, 56, 20, "Mash = %.2f\0", ds1820_get_temp(MASH));
+    lcd_printf(1, 72, 20, "Cabinet = %.2f\0", ds1820_get_temp(CABINET));
+    lcd_printf(1, 88, 20, "Ambient = %.2f\0", ds1820_get_temp(AMBIENT));
 }
 ////////////////////////////////////////////////////////////////////////////
 
@@ -493,18 +490,18 @@ void ds1820_search_applet(void)
 {
     lcd_clear(Black);
     
-    lcd_PutString(2, 3, "Get ROM code from\0 ", Blue, Black);
-    lcd_PutString(2, 19, "Current DS1820\0 ", Blue, Black);
-    lcd_PutString(2, 35, "(One at a time!)\0", Blue, Black);
-    lcd_PutString(2, 53, "Display the temp\0", Blue, Black);
-    lcd_PutString(2, 69, "of current sensor\0", Blue, Black);
+    lcd_printf(2, 3,  25, "Get ROM code from");
+    lcd_printf(2, 19, 25, "Current DS1820");
+    lcd_printf(2, 35, 25, "(One at a time!)");
+    lcd_printf(2, 53, 25, "Display the temp");
+    lcd_printf(2, 69, 25, "of current sensor");
     char * t1 = "HLT\0";
     char * t2 = "MASH\0";
     char * t3 = "CABINET\0";
     char * t4 = "AMBIENT\0";
     lcd_DrawRect(160, 0, 230, 100, Red);
-    lcd_PutString(179, 46, "BACK\0", Red, Black); 
-    lcd_draw_applet_options(t1, t2, t3, t4);
+//    lcd_PutString(179, 46, "BACK"); 
+//    lcd_draw_applet_options(t1, t2, t3, t4);
     
 }
 ////////////////////////////////////////////////////////////////////////////

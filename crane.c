@@ -111,10 +111,10 @@ void vCraneStop(){
 
 
 void manual_crane_applet(){
-    lcd_PutString(30,0, "MANUAL CRANE", Green, Black);
-    lcd_PutString(30,16, "Green = UP", Green, Black);
-    lcd_PutString(30,32, "Red = Stop", Green, Black);
-    lcd_draw_buttons();
+    lcd_printf(30,0,  20, "MANUAL CRANE", Green, Black);
+    lcd_printf(30,16, 20, "Green = UP", Green, Black);
+    lcd_printf(30,32, 20, "Red = Stop", Green, Black);
+//    lcd_draw_buttons();
 }
 
 void manual_crane_key(uint16_t x, uint16_t y){
