@@ -25,6 +25,14 @@
 #define BPP             16                  /* Bits per pixel             */
 #define BYPP            ((BPP+7)/8)         /* Bytes per pixel            */
 
+#define LCD_W 320
+#define LCD_H 240
+
+#define COL_BG_NORM 0x0890
+#define COL_BG_HIGH 0x0000
+
+
+
 /* Constants related to the LCD. */
 #define mainMAX_LINE		( 240 )
 #define mainROW_INCREMENT	( 24 )

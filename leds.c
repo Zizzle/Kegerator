@@ -17,7 +17,6 @@
 /* FreeRTOS.org includes. */
 #include "FreeRTOS.h"
 #include "task.h"
-#include "partest.h"
 
 /* Library includes. */
 #include "stm32f10x.h"
@@ -52,7 +51,8 @@ void vLEDInit( void )
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init( D3_PORT, &GPIO_InitStructure );
-    
+
+#if 0    
     xTaskCreate( vStartupLEDTask, 
                  ( signed portCHAR * ) "LED",
                  configMINIMAL_STACK_SIZE + 100,
@@ -60,7 +60,7 @@ void vLEDInit( void )
                  tskIDLE_PRIORITY+5,
                  NULL);
     
-    
+#endif    
 }
 
 void vStartupLEDTask ( void *pvParameters ) {

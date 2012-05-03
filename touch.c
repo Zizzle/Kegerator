@@ -259,64 +259,50 @@ u16 Dy(u16 yy)
 }
 */
 // Set duty cycle when using TIM3 as a PWM output.
+struct menu main_menu[] =
+{
+	{"Settings",          NULL,             NULL,      NULL, NULL},
+	{"Brew Start",        NULL,             NULL,            NULL, NULL},
+	{"Brew Resume",       NULL,             NULL,           NULL, NULL},
+	//    {"Clean up",          foo_menu,      NULL,             NULL},
+	{"Diagnostics",       NULL,        NULL,      NULL, NULL},
+		{NULL, NULL, NULL, NULL}
+};
+
 
 void vTouchTask( void *pvParameters ) 
 {
-    Touch_Initializtion();
-    portTickType xLastExecutionTime = xTaskGetTickCount();
-    portTickType xTicksToWait = 1000/portTICK_RATE_MS;
-    portBASE_TYPE xStatus;
-    extern portBASE_TYPE usMaxJitter;
-    unsigned int x = 0, y = 0, beep = TOUCH_BEEP; // current x,y value
-    static unsigned int lx = 0, ly = 0, xx = 0x0000; //place to store the last
-                                        //value of x and y for sending
-                                        //to the menu
+    printf("Touch start\r\n");
 
-    portBASE_TYPE sense, changed;
-    static portBASE_TYPE last;
-    uint32_t id = 0;
-    unsigned char b1 = 0, b2 = 0;
-    
+    Touch_Initializtion();
+    unsigned int x = 0, y = 0, beep = TOUCH_BEEP; // current x,y value
  
-    for (;;)
+    lcd_clear(0);
+
+   menu_set_root(main_menu);
+
+    unsigned char valid = 0;
+    for( ;; )
     {
-        //check TP every 50 Milliseconds
-        vTaskDelayUntil(&xLastExecutionTime, 50/portTICK_RATE_MS );
-        
+	int x,y;
+
         //measure x,y
         x = Touch_MeasurementX(); 
         y = Touch_MeasurementY();
-        
-        //do we have a touch?
-        sense = 0;
-        if ((x|y)!=0) // if we have a touch
-            sense  = 1;
-        changed = sense ^ last;
-        
 
+	if (x >=0 && x < 320 && y >= 0 && y < 240)
+	{
+	    if (!valid)
+		menu_touch(x, y);
+	    valid = 1;
+	}
+	else if (valid)
+	{
+	    menu_touch(-1, -1);
+	    valid = 0;
+	}
 
-        // do we have negative edge of touch
-        if ((changed==1) && (sense==0))
-        {
-            menu_key(lx, ly);    
-            xQueueSend(xBeepQueue, &beep, 0);
-            // SPI_FLASH_Init();
-            // SPI_FLASH_WriteEnable();
-            // b1 = SPI_FLASH_SendByte(0xA3);
-            // b2 = SPI_FLASH_SendByte(0xA3);
-            //SPI_FLASH_StartReadSequence(0x0);
-            //id =  SPI_FLASH_ReadID();
-            //SPI_FLASH_BufferRead(buf1, 0x00, 50);
-           
-            //SetTIM3Duty(xx+=1);
-            //printf("%x\r\n",TIM3->CCR3 );
-            // sprintf(buf, "%u %u jittervar\r\n", usMaxJitter, TIM2->CNT );
-//xStatus = xQueueSendToBack( xConsoleQueue, &buf, xTicksToWait );   
-        }
-        //save static variables
-        last = sense; 
-        lx = x;
-        ly = y;
+	vTaskDelay( 10 );
     }
 }
 

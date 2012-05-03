@@ -1,8 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// RCS $Date: 2010/12/05 03:19:39 $
-// RCS $Revision: 2.0 $
-// RCS $Source: /home/brad/Documents/AVR/brewbot/RCS/menu.h,v $
-// Copyright (C) 2007, Matthew Pratt
+// Copyright (C) 2011, Matthew Pratt
 //
 // Licensed under the GNU General Public License v3 or greater
 //
@@ -13,17 +10,21 @@
 #define MENU_H
 
 struct menu {
-    const char *text;             //displayed on LCD screen
-    struct menu *next;            //Pointer to the next menu (if called)
-    void (*activate)(void);       //Pointer to the function called from here
-    void (*key_handler)(uint16_t x, uint16_t y); //Ptr to the key handler called
+    const char *text;
+    struct menu *next;
+    void (*activate)(int initializing);
+    void (*press_handler)(unsigned char button_down); // called when a menu item is pressed/released
+    int  (*touch_handler)(int xx, int yy); // return non-zero if the key was consumed
 };
 
 #define MAX_DEPTH 10
 
 void menu_set_root(struct menu *root_menu);
-void menu_key(uint16_t x, uint16_t y);
+void menu_key(unsigned char key);
 void menu_clear(void);
-void menu_run_applet(void (*applet_key_handler)(uint16_t x, uint16_t y));
-void menu_update(void);
+void menu_run_applet(int (*applet_key_handler)(unsigned char));
+
+#define CRUMB_H 18
+#define COL_W    (LCD_W / 2)
+
 #endif

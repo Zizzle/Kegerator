@@ -1,6 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// RCS $Source: /home/brad/Documents/AVR/brewbot/RCS/menu.c,v $
-// Copyright (C) 2007, Matthew Pratt
+// Copyright (C) 2011, Matthew Pratt
 //
 // Licensed under the GNU General Public License v3 or greater
 //
@@ -20,187 +19,269 @@
 #include "crane.h"
 #define HEIGHT 6
 
+#define KEY_UP    0x8
+#define KEY_DOWN  0x4
+#define KEY_LEFT  0x2
+#define KEY_RIGHT 0x1
+#define KEY_PRESSED 0x10
 
-char buf[30];
 static struct menu  *g_menu[MAX_DEPTH];
-
 static unsigned char g_crumbs[MAX_DEPTH];
+static unsigned      g_item = -1;
+static unsigned char g_index = 0;
+static unsigned char g_entries = 0;
+static unsigned char g_rows = 0;
+static unsigned      g_rowh;
+static int (*g_menu_applet)(int, int) = NULL;
+static int menu_touch_y;
+static int menu_touch_x;
 
-static unsigned char g_item = 0; //this is the item on the screen 
-                                 //from the top item down. ie top = 0 
-
-static unsigned char g_index = 0;//This is the index to the depth of the 
-                                 //menu. ie main = 0. 
-
-static void (*g_menu_applet)(uint16_t x, uint16_t y) = NULL;
+static unsigned start_time;
 
 static void menu_update_hilight(void)
 {
-    // static short old = 0; // keep track of the old hilight so we can clear it
-    //lcd_clear_pixels(0, HILIGHT_Y(old),        HILIGHT_W, HILIGHT_H);
-    //lcd_set_pixels  (0, HILIGHT_Y(g_item + 1), HILIGHT_W, HILIGHT_H);
-    // old = g_item + 1;
+
 }
 
-static void menu_run_callback(void)
+static void menu_run_callback(char init)
 {
-    // if this function is called, and g_index (which is the index 
-    // of the menu depth.ie main menu = 0) is greater than 0, then the 
-    // menu in the lower level is called. 
     if (g_index > 0)
     {
-        void (*callback)(void) = g_menu[g_index - 1][g_crumbs[g_index - 1]].activate;
-     
+        void (*callback)(int) = g_menu[g_index - 1][g_crumbs[g_index - 1]].activate;
         if (callback)
-            callback(); //this is going to be the menu before the current
-                        //menu's display. 
-     }
+            callback(init);
+    }
 }
 
-void menu_update(void)
+static int menu_get_selected()
 {
-    unsigned char ii;
+	for (int ii = 0; ii < g_rows; ii++)
+	{
+    	int yy = CRUMB_H + ii * (g_rowh);
+
+    	if (menu_touch_y >= yy && menu_touch_y <= yy + g_rowh)
+    	{
+    		if (g_entries != g_rows)
+    		{
+    			for (int kk = 0; kk < 2; kk++)
+    			{
+    		    	int xx = COL_W * kk + kk;
+    				if (menu_touch_x >= xx && menu_touch_x < xx + COL_W)
+    				{
+    					return kk * g_rows + ii;
+    				}
+    			}
+    		}
+    		return ii;
+    	}
+	}
+	return -1;
+}
+
+static void menu_paint_cell(int index)
+{
+	int row = index % g_rows;
+	int col = index / g_rows;
+	int yy = CRUMB_H + row * (g_rowh);
+	int ww = g_rows == g_entries ? LCD_W : COL_W;
+	int xx = ww * col + col;
+	int offset = g_rows == g_entries ? 55 : 10;
+	uint16_t bgCol = COL_BG_NORM; 
+
+	//printf("ii %d, row %d, xx %d, yy %d\r\n", index, row, xx, yy);
+
+	if (index == g_item)
+	{
+		bgCol = COL_BG_HIGH;
+	}
+	lcd_fill(xx,  yy, ww, g_rowh - 1, bgCol);
+	if (index < g_entries)
+		lcd_text_xy(xx + offset, CRUMB_H + (row * g_rowh) + (g_rowh / 2) - 8, g_menu[g_index][index].text, 0xFFFF, bgCol);
+}
+
+static void menu_two_column()
+{
+    unsigned char ii;   
+    unsigned char row = 0;
+    unsigned char col = 0;
+    uint16_t bgCol = COL_BG_NORM;
+
+    g_rows = (g_entries / 2) + ((g_entries % 2) != 0);    
+    g_rowh = (LCD_H - CRUMB_H) / g_rows;
+
+    //printf("Rows: %d rowh: %d entries: %d\r\n", g_rows, g_rowh, g_entries);
     
-    lcd_menu_update(g_menu[g_index]);
-    return;
-                                 
+    // draw the grid
+    lcd_fill(COL_W, CRUMB_H, 1, LCD_H - CRUMB_H, 0xFFFF);
+    for (ii = 0; ii < g_rows - 1; ii++)
+		lcd_fill(0,  CRUMB_H + (ii +1) * (g_rowh) - 1, LCD_W, 1,    0xFFFF);
+    
+    for (ii = 0; g_menu[g_index][ii].text; ii++)
+    {
+    	menu_paint_cell(ii);
+    }	
+}
+
+static void menu_paint_row(int row)
+{
+	int yy = CRUMB_H + row * (g_rowh);
+	uint16_t bgCol = COL_BG_NORM; 
+	
+}
+
+static void menu_update(void)
+{
+	start_time = xTaskGetTickCount();
+	
+    unsigned char ii;
+    uint16_t bgCol = COL_BG_NORM;    	
+
+	lcd_lock();
+	lcd_background(0);
+
+    // clear menu bg
+    lcd_fill(0, CRUMB_H, LCD_W, LCD_H - CRUMB_H, bgCol);
+
+    // draw the crumbs
+    char crumbs[90] = "Brewbot";
+    for (ii = 1; ii <= g_index; ii++)
+    {
+        strcat(crumbs, ":");
+        strcat(crumbs, g_menu[ii-1][g_crumbs[ii-1]].text);
+    }
+    lcd_fill(0, 0, LCD_W, CRUMB_H, 0x0);
+    lcd_text(0, 0, crumbs);
+	lcd_fill(0, CRUMB_H - 2, LCD_W, 2, 0xFFFF);
+
+    // how big is the menu?
+    g_entries = 0;
+    for (ii = 0; g_menu[g_index][ii].text; ii++)
+    {
+    	g_entries++;
+    }
+
+    // if above a certain size draw in two columns
+    if (g_entries > 4)
+    {
+    	menu_two_column();
+    }
+    else
+    {
+    	g_rows = g_entries;
+    	g_rowh = (240 - CRUMB_H) / g_entries;
+
+    	for (ii = 0; g_menu[g_index][ii].text; ii++)
+    	{
+    		menu_paint_cell(ii);
+    		if (ii != g_entries - 1)
+    			lcd_fill(0,  CRUMB_H + (ii +1) * (g_rowh) - 1, LCD_W, 1,    0xFFFF);
+    	}
+    }
+
+    lcd_printf(30, 0, 10, "%dms", (xTaskGetTickCount() - start_time));
+    lcd_release();
 }
 
 void menu_set_root(struct menu *root_menu)
 {
-    //the menu at index 0 is the root. so make it so when called.
     g_menu[0] = root_menu;
-    // menu_update();// dont enable this whilst set_root is outside scheduler.
+    menu_update();
 }
 
-//----------------------------------------------------------------
-// When the user has selected an applet all the keys come here.
-// We offer the key to the applet. If the back key is pressed then
-// we disable keys coming here.
-//----------------------------------------------------------------
-static void menu_applet_key(uint16_t x, uint16_t y)
+//
+// Go back in the menu hierachy after the left key has been pressed
+// in an applet (or double clicked)
+//
+static void menu_back_after_applet()
 {
-    g_menu_applet(x,y);
-    if (touchIsInWindow(x,y, 160, 0, 230,100) == pdTRUE)
-    {
-        menu_clear();
-        menu_update();
-        g_menu_applet = NULL;
-        menu_run_callback();
-    }
+    void (*callback)(int) = g_menu[g_index][g_item].activate;
+	//printf("Item %d %x\r\n", g_item, callback);
+    if (callback)
+    	callback(0); // deactivate
+
+    g_item = -1;
+    menu_update();
+    g_menu_applet = NULL;
+    menu_run_callback(1);
 }
 
-void menu_key(uint16_t x, uint16_t y)
+void menu_touch(int xx, int yy)
 {
-    // If this function is called, we definitely have a negative edge
-    // on the touch screen so no need to check for that here
-
-
-    if (g_menu_applet)
-       {
-           menu_applet_key(x,y);
-        return;
-     }
-
-  
-    uint16_t window = 0;
-    static uint16_t last_window = 0; 
-    
-    if (touchIsInWindow(x,y, 0,0, 150,50) == pdTRUE)
-        window = 0;
-    
-    else  if (touchIsInWindow(x,y, 0,50, 150,100) == pdTRUE)
-        window = 1;
-    
-    
-    else  if (touchIsInWindow(x,y, 0,100, 150,150) == pdTRUE)
-        window = 2;
-
-    
-    else  if (touchIsInWindow(x,y, 0,150, 150,200) == pdTRUE)
-        window = 3;
-    
-    else  if (touchIsInWindow(x,y, 0,200, 150,250) == pdTRUE)
-        window = 4;
-    
-    
-    else  if (touchIsInWindow(x,y, 0,250, 150,300) == pdTRUE)
-        window = 5;
-    
-    else  if (touchIsInWindow(x,y, 160, 0, 230,100) == pdTRUE)
-        window = 6;
-
-    else  if (touchIsInWindow(x,y, 160, 100, 230,200) == pdTRUE)
-        window = 7;
-
-    else window = 255;
-
-    
-    //Back Button
-    if (window == 6)
-    {
-        if (g_index > 0)
-            g_index--;
-        g_item = 0;
-        menu_update();
-        menu_run_callback();
+    if (g_menu_applet) {
+    	if (g_menu_applet(xx, yy))
+    		menu_back_after_applet();
         return;
     }
-  
-    if (window == 7){
-  
-  
-    }
-  
-    if (window < 6)
-    {
-       
-      
-        if (g_menu[g_index][g_item+1].text != NULL)
-            g_item = window;
-        
-        else {
-            g_item = 0;
-            return;
-        }
-        g_crumbs[g_index] = g_item;
-        //first set the callback to the current menu's 
-        //"activate" element. Ie this is where to 
-        //call back to when we enter the next menu
-        void (*callback)(void) = g_menu[g_index][g_item].activate;
-        
-        
-        if (g_menu[g_index][g_item].next && g_index < MAX_DEPTH)
-        {
-            
-            g_index++;   
-            g_menu[g_index] = g_menu[g_index-1][g_item].next; //change menu
-            g_item = 0; //clear g_item so that we can replace contents
-            menu_update(); // update menu
-        }
-        else if (g_menu[g_index][g_item].key_handler)
-        {
-            g_menu_applet = g_menu[g_index][g_item].key_handler;
-            menu_clear();
-        }
-        
-        // run the callback which should start the applet or update the display
-        if (callback)
-        {
-            callback();
-        }
-    }
-    g_item = 0;
+
+    menu_touch_y = yy;
+    menu_touch_x = xx;    
+    //menu_update();       
+
+    int old = g_item;
+    g_item = menu_get_selected();
+
+    lcd_lock();
+
+    if (old != -1)
+    	menu_paint_cell(old);
+    if (g_item != -1)
+    	menu_paint_cell(g_item);
+
+    lcd_release();
     
+    if (xx == -1 || yy == -1 || g_item == -1)
+    {
+    	if (old != -1)
+    	{
+    		if (g_menu[g_index][old].press_handler)
+    			g_menu[g_index][old].press_handler(0);
+
+    		
+    	    void (*callback)(int) = g_menu[g_index][old].activate;
+    	    g_crumbs[g_index] = old;
+
+    	    if (g_menu[g_index][old].next && g_index < MAX_DEPTH)
+    	    {
+    	        g_index++;
+    	        g_menu[g_index] = g_menu[g_index-1][old].next;
+    	        menu_update();
+    	    }
+    	    else if (g_menu[g_index][old].touch_handler)
+    	    {
+    	        g_menu_applet = g_menu[g_index][old].touch_handler;
+    	        g_item = old;
+    	        menu_clear();
+    	    }
+    	    else if (strcmp(g_menu[g_index][old].text, "Back") == 0)
+    	    {
+    	        menu_run_callback(0);    	
+
+    	        if (g_index > 0)
+    	            g_index--;
+    	        menu_update();
+    	        menu_run_callback(1);    	
+    	    }
+    	    
+    	    // run the callback which should start the applet or update the display
+    	    if (callback)
+    	    {
+    	        callback(1);
+    	    }
+    	}
+    	return;
+    }
+    
+    menu_touch_y = 0;
+    menu_touch_x = 0;
+
+    if (g_menu[g_index][g_item].press_handler)
+    {
+    	g_menu[g_index][g_item].press_handler(1);
+    }
 }
 
 void menu_clear(void)
 {
-    lcd_clear(Black);
-}
-
-void menu_run_applet(void (*applet_key_handler)(uint16_t x, uint16_t y))
-{
-    g_menu_applet = applet_key_handler;
-    menu_clear();
+    lcd_clear(0x0);
+//    lcd_clear_pixels(0, HILIGHT_Y(g_item + 1), HILIGHT_W, HILIGHT_H);
 }

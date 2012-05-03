@@ -28,6 +28,7 @@
 #include "timer.h"
 #include "crane.h"
 #include "ds1820.h"
+#include "serial.h"
 /*-----------------------------------------------------------*/
 
 /* The period of the system clock in nano seconds.  This is used to calculate
@@ -67,6 +68,7 @@ struct menu manual_menu[] =
     {NULL, NULL, NULL, NULL}
 };
 
+/*
 struct menu main_menu[] =
 {
     {"Manual Control",  manual_menu,   NULL, NULL},
@@ -77,7 +79,7 @@ struct menu main_menu[] =
     {"Main6",       NULL,    NULL, NULL},
     {NULL, NULL, NULL, NULL}
 };
-
+*/
 /*-----------------------------------------------------------*/
 
 xTaskHandle xLCDTaskHandle, 
@@ -101,15 +103,24 @@ int main( void )
 #ifdef DEBUG
     debug();
 #endif
+
+//__libc_init_array();
     
+GPIO_InitTypeDef GPIO_InitStructure;
+	GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_13;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init( GPIOD, &GPIO_InitStructure );
+
+
     prvSetupHardware();// set up peripherals etc 
+    USARTInit(USART_PARAMS1);
 
-    vLEDInit();   // set up the LED flash io and tasks
-    
-    xSerialPortInitMinimal( 9600, 255 );       
+    SCB->SHCSR |= SCB_SHCSR_BUSFAULTENA;
 
-    USART2Init();
-   
+
+    lcd_init();          
+
     speaker_init();
 
     vCraneInit();
@@ -121,15 +132,8 @@ int main( void )
     // tft Pins
 
       
-    //LCD Task starts at high priority, then drops
-    xTaskCreate( vLCDTask, 
-                 ( signed portCHAR * ) "LCD", 
-                 mainLCD_TASK_STACK_SIZE, 
-                 NULL, 
-                 tskIDLE_PRIORITY+6, 
-                 &xLCDTaskHandle );
-    
-    
+ 
+
     xTaskCreate( vTouchTask, 
                  ( signed portCHAR * ) "touch", 
                  configMINIMAL_STACK_SIZE +1000, 
@@ -137,6 +141,7 @@ int main( void )
                  tskIDLE_PRIORITY+2,
                  &xTouchTaskHandle );
     
+/*
     xTaskCreate( vTerminalMessagesTask, 
                  ( signed portCHAR * ) "term", 
                  configMINIMAL_STACK_SIZE + 1500, 
@@ -158,12 +163,13 @@ int main( void )
                  NULL, 
                  tskIDLE_PRIORITY,
                  &xDS1820Handle );
-   
-    menu_set_root(main_menu);
-    
+*/
+       
     /* Start the scheduler. */
     vTaskStartScheduler();
     
+    printf("FAIL\r\n");
+
     /* Will only get here if there was insufficient memory to create the idle
        task. */
     return 0;
@@ -261,16 +267,14 @@ void vApplicationStackOverflowHook( xTaskHandle *pxTask, signed portCHAR *pcTask
 
 
 
-#ifdef DEBUG
 
 /* Keep the linker happy. */
 void assert_failed( unsigned portCHAR* pcFile, unsigned portLONG ulLine )
 {
+    printf("FAILED %s %d\r\n", pcFile, ulLine);
 
 	for( ;; )
 	{
 	}
 }
-
-#endif
 

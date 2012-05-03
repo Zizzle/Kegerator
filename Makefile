@@ -16,13 +16,11 @@
 #******************************************************************************
 
 # Project name
-PROJECT_NAME=RTOSDemo
+PROJECT_NAME=RTOSBrew
 
 
 # Directory definition.
 RTOS_SOURCE_DIR=./FreeRTOS/Source
-DEMO_COMMON_DIR=./demo
-DEMO_INCLUDE_DIR=./demo/include
 ST_LIB_DIR=./std_periph_drivers
 ARM_CMSIS_DIR=./CM3
 
@@ -53,7 +51,7 @@ DEBUG= gdb
 #OPT = s
 #OPT = 2
 #OPT = 3
-OPT = s
+OPT = 0
 
 
 # Compiler flag to set the C Standard level.
@@ -61,7 +59,7 @@ OPT = s
 # gnu89 - c89 plus GCC extensions
 # c99   - ISO C99 standard (not yet fully implemented)
 # gnu99 - c99 plus GCC extensions
-CSTANDARD = gnu89
+CSTANDARD = gnu99
 
 
 # Compiler flags definition.
@@ -72,7 +70,7 @@ CFLAGS=-g$(DEBUG)\
 		-I . \
 		-I $(RTOS_SOURCE_DIR)/include\
 		-I $(RTOS_SOURCE_DIR)/portable/GCC/ARM_CM3 \
-		-I $(DEMO_INCLUDE_DIR) \
+		-I drivers \
 		-I $(ST_LIB_DIR)/inc \
 		-I $(ARM_CMSIS_DIR)\
 	       	-D STM32F10X_HD \
@@ -93,7 +91,7 @@ SOURCE=	main.c 	lcd.c \
 		stm32f10x_it.c \
 		stf_syscalls_minimal.c \
 		touch.c \
-		serial.c \
+		drivers/serial.c \
 		leds.c \
 		console.c \
 		menu.c \
@@ -102,8 +100,8 @@ SOURCE=	main.c 	lcd.c \
 		SPI_Flash_ST_Eval.c \
 		crane.c \
 		ds1820.c \
-		images.c \
-		cpu_diag.c
+		images.c
+
 # ST Library source files.
 ST_LIB_SOURCE= \
 		$(ARM_CMSIS_DIR)/core_cm3.c \
@@ -117,12 +115,6 @@ ST_LIB_SOURCE= \
 		$(ST_LIB_DIR)/src/stm32f10x_fsmc.c \
 		$(ST_LIB_DIR)/src/stm32f10x_flash.c \
 
-# FreeRTOS common demo source files.
-FREERTOS_COMMON_DEMO_SOURCE = \
-	       	$(DEMO_COMMON_DIR)/integer.c \
-		$(DEMO_COMMON_DIR)/PollQ.c \
-		$(DEMO_COMMON_DIR)/semtest.c \
-
 # FreeRTOS source files.
 FREERTOS_SOURCE= $(RTOS_SOURCE_DIR)/list.c \
 		$(RTOS_SOURCE_DIR)/queue.c \
@@ -132,7 +124,6 @@ FREERTOS_SOURCE= $(RTOS_SOURCE_DIR)/list.c \
 
 
 SOURCE+=$(ST_LIB_SOURCE)
-SOURCE+=$(FREERTOS_COMMON_DEMO_SOURCE)
 SOURCE+=$(FREERTOS_SOURCE)
 
 
@@ -207,8 +198,17 @@ $(shell mkdir $(OUTDIR) 2>NUL)
 
 install0: all
 
-	stm32loader.py -ew -p /dev/ttyUSB0 RTOSDemo.bin
+	./stm32loader.py -ew -p /dev/ttyUSB0 RTOSBrew.bin
 
 install1: all 
 
-	stm32loader.py -ew -p /dev/ttyUSB1 RTOSDemo.bin
+	./stm32loader.py -ew -p /dev/ttyUSB1 RTOSBrew.bin
+
+jtag: all
+	echo "reset halt" | nc localhost 4444
+	echo "stm32f1x mass_erase 0" | nc localhost 4444
+	echo "flash write_bank 0 RTOSBrew.bin 0" | nc localhost 4444
+	echo "reset halt" | nc localhost 4444
+
+run: jtag
+	echo "reset run" | nc localhost 4444

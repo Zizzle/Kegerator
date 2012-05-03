@@ -128,7 +128,7 @@ extern unsigned long _ebss;			/* end address for the .bss section. defined in li
 //
 //*****************************************************************************
 #ifndef STACK_SIZE
-#define STACK_SIZE	64
+#define STACK_SIZE	256
 #endif
 static unsigned long pulStack[STACK_SIZE];
 
@@ -361,13 +361,8 @@ void Reset_Handler(void)
 
 void Default_Handler(void)
 {
-GPIO_InitTypeDef GPIO_InitStructure;
     //set D2
-	GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_13;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init( GPIOD, &GPIO_InitStructure );
-        GPIO_WriteBit( GPIOD, GPIO_Pin_13, 1 );       
+//        GPIO_WriteBit( GPIOD, GPIO_Pin_13, 1 );       
  
 
   /* Go into an infinite loop. */
@@ -389,5 +384,3 @@ void SystemInit_ExtMemCtl_Dummy(void)
 
 
 /********************* (C) COPYRIGHT 2007 STMicroelectronics  *****END OF FILE****/
-
-

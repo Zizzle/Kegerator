@@ -23,7 +23,7 @@
 /* Exported types ------------------------------------------------------------*/
      /* ASCII Table: each character is 16 column (16dots large) 
         and 24 raw (24 dots high) */
-     uc16 ASCII_Table[] =
+     uc16 const ASCII_Table[] =
        {
          /* Space ' ' */
          0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
