@@ -192,7 +192,7 @@ u16 _AD2Y(int ady)
     return sy;
 }
 
-uint16_t  Touch_MeasurementX(void)
+int16_t  Touch_MeasurementY(void)
 {
     u8 i;
     u16 p=0;
@@ -205,10 +205,10 @@ uint16_t  Touch_MeasurementX(void)
     p = (p-380)/14;
     if (p < 240)
         return ( 240 - p );
-    else return 0;
+    else return -1;
 }
 
-uint16_t  Touch_MeasurementY(void)
+int16_t  Touch_MeasurementX(void)
 {
     u8 i;
     u16 p=0;
@@ -221,8 +221,8 @@ uint16_t  Touch_MeasurementY(void)
     p>>=3;
     p = (((p-210)*2)/23);
     if (p < 320)
-        return ( 320 - p );
-    else return 0;
+        return ( p );
+    else return -1;
 }
 
 u16  Touch_GetPhyX(void)
@@ -248,25 +248,25 @@ u16  Touch_GetPhyY(void)
     while(!Touch_Busy());
     return (Touch_Read());
 }
-/*
-u16 Dx(u16 xx)
+
+struct menu manual_menu[] =
 {
-  return (_AD2X(xx));
-}
-u16 Dy(u16 yy)
-{
-  return (_AD2Y(yy));
-}
-*/
-// Set duty cycle when using TIM3 as a PWM output.
+    {"Manual Crane",   NULL, NULL, NULL},
+    {"Man_2",    NULL,     NULL, NULL}, 
+    {"Man_3",    NULL,     NULL, NULL},
+    {"Man_4",    NULL,     NULL, NULL},
+    {"Man_5",    NULL,     NULL, NULL},
+    {"Man_6",    NULL,     NULL, NULL},
+    {NULL, NULL, NULL, NULL}
+};
+
 struct menu main_menu[] =
 {
 	{"Settings",          NULL,             NULL,      NULL, NULL},
 	{"Brew Start",        NULL,             NULL,            NULL, NULL},
 	{"Brew Resume",       NULL,             NULL,           NULL, NULL},
-	//    {"Clean up",          foo_menu,      NULL,             NULL},
-	{"Diagnostics",       NULL,        NULL,      NULL, NULL},
-		{NULL, NULL, NULL, NULL}
+	{"Diagnostics",       manual_menu,        NULL,      NULL, NULL},
+	{NULL, NULL, NULL, NULL}
 };
 
 
@@ -290,6 +290,8 @@ void vTouchTask( void *pvParameters )
         x = Touch_MeasurementX(); 
         y = Touch_MeasurementY();
 
+	//printf("x %d y %d\r\n", x, y);
+
 	if (x >=0 && x < 320 && y >= 0 && y < 240)
 	{
 	    if (!valid)
@@ -304,14 +306,4 @@ void vTouchTask( void *pvParameters )
 
 	vTaskDelay( 10 );
     }
-}
-
-   
-portBASE_TYPE touchIsInWindow(uint16_t x, uint16_t y, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
-{
-    //   char buf[256] = "in check\r\n";
-    // xQueueSendToBack(xConsoleQueue, &buf, 0); //send message
-    if (((x < x2) && (x > x1)) && ((y < y2) && (y > y1)))
-        return pdTRUE;
-    else return pdFALSE;
 }

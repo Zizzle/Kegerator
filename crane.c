@@ -117,6 +117,7 @@ void manual_crane_applet(){
 //    lcd_draw_buttons();
 }
 
+/*
 void manual_crane_key(uint16_t x, uint16_t y){
 
     uint16_t window = 0;
@@ -172,3 +173,4 @@ void manual_crane_key(uint16_t x, uint16_t y){
     }
 
 }
+*/

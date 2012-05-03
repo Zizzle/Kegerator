@@ -167,6 +167,7 @@ void lcd_init(void)
 #endif
 
 #if 1
+    write_reg(0x0003,0x1018);//Entry Mode BGR, Horizontal, then vertical
 
     //Eye Candy//
     Delay(10);      
@@ -321,7 +322,7 @@ static void power_SET(void)
     
     write_reg(0x0001,0x0100);//Driver Output Control
     write_reg(0x0002,0x0300);//Driving Range Control
-    write_reg(0x0003,0x1030);//Entry Mode BGR, Horizontal, then vertical
+    write_reg(0x0003,0x1008);//Entry Mode BGR, Horizontal, then vertical
     write_reg(0x0008,0x0604);//Display Control, first 4 and last 6
     //lines blank
     write_reg(0x0009,0x0000);//Display Control
@@ -586,7 +587,7 @@ static __inline void lcd_write_ram_prepare(void)
 static void lcd_set_cursor(uint16_t Xpos,uint16_t Ypos)
 {
     write_reg(32, Ypos); /* Row */
-    write_reg(33, Xpos); /* Line */ 
+    write_reg(33, MAX_X - Xpos); /* Line */ 
 }
 
 static void lcd_char_xy(unsigned short Xpos,unsigned short Ypos,unsigned char c,unsigned short charColor,unsigned short bkColor)
@@ -613,7 +614,7 @@ static void lcd_DrawHLine(int x1, int x2, int col, int y )
 {
     uint16_t ptr;
     //Set up registers for horizontal scanning
-    write_reg(0x0003,(1<<12)|(1<<5)|(1<<4) | (0<<3) );
+//    write_reg(0x0003,(1<<12)|(1<<5)|(1<<4) | (0<<3) );
     
     lcd_SetCursor(x1, y); //start position
     rw_data_prepare(); /* Prepare to write GRAM */
@@ -630,7 +631,7 @@ static void lcd_DrawVLine(int y1, int y2, int col, int x)
     unsigned short p;
     
     //Set up registers for vertical scanning 
-    write_reg(0x0003,(1<<12)|(1<<5)|(0<<4) | (1<<3) );
+//    write_reg(0x0003,(1<<12)|(1<<5)|(0<<4) | (1<<3) );
     
     lcd_SetCursor(x, y1); //start position
     rw_data_prepare(); /* Prepare to write GRAM */

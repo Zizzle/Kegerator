@@ -145,7 +145,8 @@ void ds1820_search_key(uint16_t x, uint16_t y){
     float sensor_temp = 0.00;
     static uint16_t last_window = 0; 
     
-   
+
+/*   
     // window locations
     if (touchIsInWindow(x,y, 0,0, 150,50) == pdTRUE)
         window = 0;
@@ -171,7 +172,7 @@ void ds1820_search_key(uint16_t x, uint16_t y){
     
     else  if (touchIsInWindow(x,y, 160, 0, 230,100) == pdTRUE)
         window = 6;
-    
+*/  
     //Back Button
     if (window == 6)
     {

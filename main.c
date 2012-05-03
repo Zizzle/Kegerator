@@ -57,17 +57,6 @@ struct menu diag_menu[] =
     {NULL, NULL, NULL, NULL}
 };
 
-struct menu manual_menu[] =
-{
-    {"Manual Crane",   NULL, manual_crane_applet, manual_crane_key},
-    {"Man_2",    NULL,     NULL, NULL}, 
-    {"Man_3",    NULL,     NULL, NULL},
-    {"Man_4",    NULL,     NULL, NULL},
-    {"Man_5",    NULL,     NULL, NULL},
-    {"Man_6",    NULL,     NULL, NULL},
-    {NULL, NULL, NULL, NULL}
-};
-
 /*
 struct menu main_menu[] =
 {
