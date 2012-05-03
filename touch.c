@@ -249,14 +249,28 @@ u16  Touch_GetPhyY(void)
     return (Touch_Read());
 }
 
+static void led_on(unsigned char button_down)
+{
+	if (button_down)     GPIO_WriteBit( GPIOC, GPIO_Pin_7, 1 );
+}
+static void led_off(unsigned char button_down)
+{
+	if (button_down)     GPIO_WriteBit( GPIOC, GPIO_Pin_7, 0 );
+}
+static void led_pulse(unsigned char button_down)
+{
+	GPIO_WriteBit( GPIOC, GPIO_Pin_7, button_down );
+}
+
+
 struct menu manual_menu[] =
 {
     {"Manual Crane",   NULL, NULL, NULL},
-    {"Man_2",    NULL,     NULL, NULL}, 
-    {"Man_3",    NULL,     NULL, NULL},
-    {"Man_4",    NULL,     NULL, NULL},
-    {"Man_5",    NULL,     NULL, NULL},
+    {"Beep",     NULL,     NULL, NULL}, 
     {"Man_6",    NULL,     NULL, NULL},
+    {"Led On",   NULL,     NULL, led_on},
+    {"Led Off",  NULL,     NULL, led_off},
+    {"Led Pulse",NULL,     NULL, led_pulse},
     {NULL, NULL, NULL, NULL}
 };
 

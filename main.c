@@ -115,7 +115,7 @@ GPIO_InitTypeDef GPIO_InitStructure;
     vCraneInit();
 
         
-    
+    vLEDInit();
         
 // SPI_FLASH_Init(); cant use this ATM because of conflict with
     // tft Pins

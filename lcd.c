@@ -12,6 +12,11 @@
 #include "semphr.h"
 #include "stm32f10x.h"
 
+
+// Doco for our LCD driver is here:
+// http://www.displayfuture.com/engineering/specs/controller/LGDP4532.pdf
+
+
 #ifdef __CC_ARM                			 /* ARM Compiler 	*/
 #define lcd_inline   				static __inline
 #elif defined (__ICCARM__)        		/* for IAR Compiler */
