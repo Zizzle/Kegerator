@@ -609,7 +609,6 @@ static void lcd_char_xy(unsigned short Xpos,unsigned short Ypos,unsigned char c,
     }
 }
 
-
 static void lcd_DrawHLine(int x1, int x2, int col, int y ) 
 {
     uint16_t ptr;
@@ -625,7 +624,6 @@ static void lcd_DrawHLine(int x1, int x2, int col, int y )
         
     }
 }
-
 
 static void lcd_DrawVLine(int y1, int y2, int col, int x)
 {
@@ -643,9 +641,7 @@ static void lcd_DrawVLine(int y1, int y2, int col, int x)
     }
 }
 
-
 static uint16_t bg_col;
-
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // LOCKING code
