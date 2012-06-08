@@ -18,7 +18,6 @@
 
 /*app includes. */
 //#include "stm3210e_lcd.h"
-#include "LCD_Message.h"
 #include "console.h" 
 #include "leds.h"
 #include "touch.h"
@@ -26,7 +25,6 @@
 #include "menu.h" 
 #include "speaker.h"
 #include "timer.h"
-#include "crane.h"
 #include "ds1820.h"
 #include "serial.h"
 /*-----------------------------------------------------------*/
@@ -111,8 +109,6 @@ GPIO_InitTypeDef GPIO_InitStructure;
     lcd_init();          
 
     speaker_init();
-
-    vCraneInit();
 
         
     vLEDInit();

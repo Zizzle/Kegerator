@@ -7,8 +7,6 @@
 #include "menu.h"
 #include "lcd.h"
 #include "touch.h"
-#include "images.h"
-#include "ili9320_font.h"
 #include "semphr.h"
 #include "stm32f10x.h"
 

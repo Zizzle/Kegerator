@@ -17,7 +17,6 @@
 #include "console.h"
 #include "speaker.h"
 #include "timer.h"
-#include "crane.h"
 
 
 #define CH_X  0xd0//0x90
