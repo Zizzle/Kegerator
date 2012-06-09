@@ -16,7 +16,6 @@
 /* Scheduler includes. */
 #include "FreeRTOS.h"
 #include "queue.h" 
-#include "console.h"
 /* Library includes. */
 #include "stm32f10x.h"
 //#include "timer.h"

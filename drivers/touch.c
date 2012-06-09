@@ -7,17 +7,11 @@
 #include "stm32f10x.h"
 
 #include "FreeRTOS.h"
-
 #include "queue.h"
-
 #include "touch.h"
 #include "task.h"
-#include "lcd.h"
-#include "menu.h"
-#include "console.h"
 #include "speaker.h"
-#include "timer.h"
-
+#include "menu.h"
 
 #define CH_X  0xd0//0x90
 #define CH_Y  0x90//0xd0

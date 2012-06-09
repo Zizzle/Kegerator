@@ -92,7 +92,6 @@ SOURCE=	main.c 	drivers/lcd.c \
 		drivers/touch.c \
 		drivers/serial.c \
 		drivers/leds.c \
-		console.c \
 		menu.c \
 		drivers/speaker.c \
 		drivers/timer.c \

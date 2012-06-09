@@ -15,7 +15,6 @@
 #include "menu.h"
 #include "queue.h"
 #include "lcd.h"
-#include "console.h"
 #define HEIGHT 6
 
 #define KEY_UP    0x8

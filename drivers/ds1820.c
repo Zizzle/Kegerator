@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include "ds1820.h"
 #include "queue.h"
-#include "console.h"
 #include "lcd.h"
 
 
@@ -83,7 +82,6 @@ void vTaskDS1820Convert( void *pvParameters ){
     if (ds1820_reset() ==PRESENCE_ERROR)
     {
         sprintf(buf, "NO SENSOR DETECTED\r\n");
-        xQueueSendToBack(xConsoleQueue, &buf, 1000);
         vTaskDelete(NULL); // if this task fails... delete it
     }
   
@@ -448,7 +446,6 @@ static uint8_t ds1820_search(){
     portEXIT_CRITICAL();
     ds1820_reset();
     sprintf(console_text, "Sensor search complete\r\n\0");
-    xQueueSendToBack(xConsoleQueue, &console_text, 0);
    
 }
 ////////////////////////////////////////////////////////////////////////////

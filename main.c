@@ -18,7 +18,6 @@
 
 /*app includes. */
 //#include "stm3210e_lcd.h"
-#include "console.h" 
 #include "leds.h"
 #include "touch.h"
 #include "lcd.h"

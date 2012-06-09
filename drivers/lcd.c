@@ -3,10 +3,7 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "task.h"
-#include "console.h"
-#include "menu.h"
 #include "lcd.h"
-#include "touch.h"
 #include "semphr.h"
 #include "stm32f10x.h"
 
