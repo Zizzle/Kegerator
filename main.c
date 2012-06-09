@@ -26,6 +26,7 @@
 #include "timer.h"
 #include "ds1820.h"
 #include "serial.h"
+#include "adc.h"
 /*-----------------------------------------------------------*/
 
 /* The period of the system clock in nano seconds.  This is used to calculate
@@ -43,7 +44,7 @@ static void prvSetupHardware( void );
 
 xTaskHandle xLCDTaskHandle, 
     xTouchTaskHandle, 
-    xTerminalTaskHandle , 
+    xAdcTaskHandle , 
     xBeepTaskHandle, 
     xTimerSetupHandle,
     xDS1820Handle;
@@ -87,6 +88,13 @@ GPIO_InitTypeDef GPIO_InitStructure;
                  NULL, 
                  tskIDLE_PRIORITY+2,
                  &xTouchTaskHandle );
+
+    xTaskCreate( vAdcTask, 
+                 ( signed portCHAR * ) "ADC", 
+                 configMINIMAL_STACK_SIZE +1000, 
+                 NULL, 
+                 tskIDLE_PRIORITY+2,
+                 &xAdcTaskHandle );
     
        
     /* Start the scheduler. */
