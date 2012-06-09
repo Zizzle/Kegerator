@@ -260,7 +260,7 @@ struct menu manual_menu[] =
 {
     {"Manual Crane",   NULL, NULL, NULL},
     {"Beep",     NULL,     NULL, NULL}, 
-    {"Man_6",    NULL,     NULL, NULL},
+    {"Man_8",    NULL,     NULL, NULL},
     {"Led On",   NULL,     NULL, led_on},
     {"Led Off",  NULL,     NULL, led_off},
     {"Led Pulse",NULL,     NULL, led_pulse},

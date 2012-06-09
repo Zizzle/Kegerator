@@ -39,33 +39,6 @@ the jitter time in nano seconds. */
  */
 static void prvSetupHardware( void );
 
-/**
- * Configure the menu structures for the App.
- */
-
-struct menu diag_menu[] =
-{
-    {"DS1820 Setup",    NULL, ds1820_search_applet, ds1820_search_key}, 
-    {"DS1820 temps",    NULL, ds1820_display_temps, NULL},
-    {"Diag3",    NULL,     NULL, NULL},
-    {"Diag4",    NULL,     NULL, NULL},
-    {"Diag5",    NULL,     NULL, NULL},
-    {"Diag6",    NULL,     NULL, NULL},
-    {NULL, NULL, NULL, NULL}
-};
-
-/*
-struct menu main_menu[] =
-{
-    {"Manual Control",  manual_menu,   NULL, NULL},
-    {"Diagnostics",     diag_menu,     NULL, NULL},
-    {"Main3",       NULL,    NULL, NULL},
-    {"Main4",       NULL,    NULL, NULL},
-    {"Main5",       NULL,    NULL, NULL},
-    {"Main6",       NULL,    NULL, NULL},
-    {NULL, NULL, NULL, NULL}
-};
-*/
 /*-----------------------------------------------------------*/
 
 xTaskHandle xLCDTaskHandle, 
@@ -104,19 +77,9 @@ GPIO_InitTypeDef GPIO_InitStructure;
 
     SCB->SHCSR |= SCB_SHCSR_BUSFAULTENA;
 
-
     lcd_init();          
-
-    speaker_init();
-
-        
+    speaker_init();        
     vLEDInit();
-        
-// SPI_FLASH_Init(); cant use this ATM because of conflict with
-    // tft Pins
-
-      
- 
 
     xTaskCreate( vTouchTask, 
                  ( signed portCHAR * ) "touch", 
@@ -125,29 +88,6 @@ GPIO_InitTypeDef GPIO_InitStructure;
                  tskIDLE_PRIORITY+2,
                  &xTouchTaskHandle );
     
-/*
-    xTaskCreate( vTerminalMessagesTask, 
-                 ( signed portCHAR * ) "term", 
-                 configMINIMAL_STACK_SIZE + 1500, 
-                 NULL, 
-                 tskIDLE_PRIORITY,
-                 &xTerminalTaskHandle );
-
-    xTaskCreate( vBeepTask, 
-                 ( signed portCHAR * ) "beep", 
-                 configMINIMAL_STACK_SIZE, 
-                 NULL, 
-                 tskIDLE_PRIORITY,
-                 &xBeepTaskHandle );
-
-   
-    xTaskCreate( vTaskDS1820Convert, 
-                 ( signed portCHAR * ) "DS1820", 
-                 configMINIMAL_STACK_SIZE + 500, 
-                 NULL, 
-                 tskIDLE_PRIORITY,
-                 &xDS1820Handle );
-*/
        
     /* Start the scheduler. */
     vTaskStartScheduler();

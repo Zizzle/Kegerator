@@ -1,4 +1,4 @@
-openocd -f stm_board.cfg
+openocd -f jtag/stm_board.cfg
 
 telnet localhost 4444
 
