@@ -327,6 +327,9 @@ static void power_SET(void)
     //lines blank
     write_reg(0x0009,0x0000);//Display Control
     write_reg(0x000A,0x0008);//Output FMARK every 1 Frame
+
+    write_reg(0x000C,0x1003);
+
     
     write_reg(0x0041,0x0002);
     write_reg(0x0060,0x2700);
@@ -598,14 +601,20 @@ static void lcd_char_xy(unsigned short Xpos,unsigned short Ypos,unsigned char c,
     unsigned char tmp_char=0;
     for (i=0;i<16;i++)
     {
-	lcd_set_cursor(Xpos,Ypos+i);
-	lcd_write_ram_prepare();
 
 	tmp_char=buffer[i];
 	for (j=0;j<8;j++)
 	{
-	    uint16_t col = ( (tmp_char >> 7-j) & 0x01) ? charColor : bkColor;
-	    write_data(col);
+	    if ( (tmp_char >> 7-j) & 0x01)
+	    {
+		lcd_set_cursor(Xpos + j,Ypos+i);
+		lcd_write_ram_prepare();
+		write_data(charColor);
+	    }
+		
+
+	    //uint16_t col = ( (tmp_char >> 7-j) & 0x01) ? charColor : bkColor;
+	    //write_data(col);
 	}
     }
 }
@@ -769,3 +778,14 @@ void lcd_DrawRect(int x1, int y1, int x2, int y2, int col)
     LCD_UNLOCK;
 }
 
+void display_on()
+{
+    write_reg(0x000C,0x1003);
+}
+
+void display_off()
+{
+    write_reg(0x000F,0x0010);
+    
+    write_reg(0x000C,0x1023);
+}

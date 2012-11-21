@@ -7,10 +7,10 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef ADC_H
-#define ADC_H
+#ifndef KEG_DISPLAY_H
+#define KEG_DISPLAY_H
 
-void adc_init (void);
-unsigned short read_adc(int channel);
+void screen_touch(int xx, int yy);
+void vKegTask( void *pvParameters );
 
 #endif

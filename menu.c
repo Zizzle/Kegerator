@@ -141,7 +141,7 @@ static void menu_update(void)
     lcd_fill(0, CRUMB_H, LCD_W, LCD_H - CRUMB_H, bgCol);
 
     // draw the crumbs
-    char crumbs[90] = "Brewbot";
+    char crumbs[90] = "Kegerator";
     for (ii = 1; ii <= g_index; ii++)
     {
         strcat(crumbs, ":");
@@ -176,7 +176,7 @@ static void menu_update(void)
     	}
     }
 
-    lcd_printf(30, 0, 10, "%dms", (xTaskGetTickCount() - start_time));
+//    lcd_printf(30, 0, 10, "%dms", (xTaskGetTickCount() - start_time));
     lcd_release();
 }
 

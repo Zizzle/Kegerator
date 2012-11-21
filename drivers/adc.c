@@ -7,9 +7,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "stm32f10x.h"
-#include "FreeRTOS.h"
-#include "lcd.h"
 #include "stm32f10x_adc.h"
 
 void adc_init (void)
@@ -44,25 +41,4 @@ unsigned short read_adc(int channel)
     ADC_SoftwareStartConvCmd(ADC1, ENABLE);
     while(ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) == RESET);
     return ADC_GetConversionValue(ADC1);
-}
-
-void vAdcTask( void *pvParameters ) 
-{
-    printf("Adc start\r\n");
-
-    adc_init();
-
-    for( ;; )
-    {
-	unsigned keg1 = read_adc(11);
-
-	lcd_printf(5,5, 20, "%d", keg1 );
-
-	int ww = (keg1 * 320) / 4096;
-
-	lcd_fill(0,  16, ww, 50, 0x9999);
-	lcd_fill(ww, 16, 320-ww, 50, 0x0);
-
-	vTaskDelay( 100 );
-    }
 }

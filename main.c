@@ -26,7 +26,9 @@
 #include "timer.h"
 #include "ds1820.h"
 #include "serial.h"
-#include "adc.h"
+#include "keg_display.h"
+#include "temp_control.h"
+#include "settings.h"
 /*-----------------------------------------------------------*/
 
 /* The period of the system clock in nano seconds.  This is used to calculate
@@ -78,9 +80,14 @@ GPIO_InitTypeDef GPIO_InitStructure;
 
     SCB->SHCSR |= SCB_SHCSR_BUSFAULTENA;
 
+	spi_init();
+	flash_read_id();
+	settings_load();
+
     lcd_init();          
     speaker_init();        
     vLEDInit();
+
 
     xTaskCreate( vTouchTask, 
                  ( signed portCHAR * ) "touch", 
@@ -89,13 +96,26 @@ GPIO_InitTypeDef GPIO_InitStructure;
                  tskIDLE_PRIORITY+2,
                  &xTouchTaskHandle );
 
-    xTaskCreate( vAdcTask, 
+    xTaskCreate( vKegTask, 
                  ( signed portCHAR * ) "ADC", 
                  configMINIMAL_STACK_SIZE +1000, 
                  NULL, 
                  tskIDLE_PRIORITY+2,
                  &xAdcTaskHandle );
+
+    xTaskCreate( vTaskDS1820Convert, 
+                 ( signed portCHAR * ) "DS1820", 
+                 configMINIMAL_STACK_SIZE +1000, 
+                 NULL, 
+                 tskIDLE_PRIORITY+2,
+                 &xAdcTaskHandle );
     
+    xTaskCreate( vTaskTempControl, 
+                 ( signed portCHAR * ) "Temp", 
+                 configMINIMAL_STACK_SIZE +1000, 
+                 NULL, 
+                 tskIDLE_PRIORITY+3,
+                 &xAdcTaskHandle );
        
     /* Start the scheduler. */
     vTaskStartScheduler();

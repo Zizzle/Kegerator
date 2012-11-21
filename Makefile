@@ -93,7 +93,12 @@ SOURCE=	main.c 	drivers/lcd.c \
 		drivers/serial.c \
 		drivers/adc.c \
 		drivers/leds.c \
+		drivers/spi.c \
+		drivers/spi_flash.c \
 		menu.c \
+		settings.c \
+		temp_control.c \
+		keg_display.c \
 		drivers/speaker.c \
 		drivers/timer.c \
 		drivers/ds1820.c
@@ -196,11 +201,11 @@ $(shell mkdir $(OUTDIR) 2>/dev/null)
 
 install0: all
 
-	./stm32loader.py -ew -p /dev/ttyUSB0 RTOSBrew.bin
+	stm32loader.py -ew -p /dev/ttyUSB0 RTOSBrew.bin
 
 install1: all 
 
-	./stm32loader.py -ew -p /dev/ttyUSB1 RTOSBrew.bin
+	stm32loader.py -ew -p /dev/ttyUSB1 RTOSBrew.bin
 
 jtag: all
 	echo "reset halt" | nc localhost 4444

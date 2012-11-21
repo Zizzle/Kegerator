@@ -8,9 +8,8 @@
 #ifndef DS1820_H
 #define DS1820_H
 
-#define DS1820_PORT GPIOC
-#define DS1820_PIN  GPIO_Pin_10
-
+#define DS1820_PORT GPIOE
+#define DS1820_PIN  GPIO_Pin_5
 
 #define BUS_ERROR      0xFE
 #define PRESENCE_ERROR 0xFD
@@ -27,11 +26,6 @@
 void          vTaskDS1820Convert( void *pvParameters ); //task to
 
 //get temp of a particular sensor
-float         ds1820_get_temp(unsigned char sensor);
+uint32_t         ds1820_get_temp();
 
-
-//Menu functions
-void          ds1820_search_applet(void);
-void          ds1820_search_key(uint16_t x, uint16_t y);
-void          ds1820_display_temps(void);
 #endif
