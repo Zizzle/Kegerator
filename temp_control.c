@@ -8,6 +8,7 @@
 #include "settings.h"
 
 #define MIN_DELAY 600
+#define HYSTERESIS 500
 
 #define RELAY_PORT GPIOC      // E
 #define RELAY_PIN GPIO_Pin_7 // 4
@@ -25,8 +26,16 @@ int temp_get_target()
 	return g_settings.target_temp;
 }
 
-static void run_freezer(int on)
+static void run_freezer(uint32_t current, uint32_t target)
 {
+	if (running && current > target - HYSTERESIS)
+		return; // leave it running
+
+	if (!running && current < target + HYSTERESIS)
+		return; // stay off till we get a bit warmer
+
+	int on = current > target;
+
 	if (!on || (!running && seconds_since_run < MIN_DELAY))
 	{
 		GPIO_ResetBits(RELAY_PORT, RELAY_PIN);	
@@ -50,7 +59,7 @@ void vTaskTempControl( void *pvParameters )
 
     for (;;)
     {
-		run_freezer(ds1820_get_temp() > temp_get_target());
+		run_freezer(ds1820_get_temp(), temp_get_target());
 		seconds_since_run++;
         vTaskDelay(1000); // wait for conversion
     }    
