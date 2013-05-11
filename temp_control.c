@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include "ds1820.h"
 #include "settings.h"
+#include "temp_control.h"
 
 #define MIN_DELAY 600
 #define HYSTERESIS 50
@@ -13,8 +14,9 @@
 #define RELAY_PORT GPIOC      // E
 #define RELAY_PIN GPIO_Pin_7 // 4
 
-static 	int seconds_since_run;
-static int running = 0;
+static int seconds_since_run;
+static int run_time = 0;
+static int state = 0;
 
 void temp_set_target(int target)
 {
@@ -26,26 +28,71 @@ int temp_get_target()
 	return g_settings.target_temp;
 }
 
+int temp_get_state()
+{
+	return state;
+}
+
+static void turn_on()
+{
+	if (seconds_since_run < MIN_DELAY)
+	{
+		state = STATE_WAITING;
+	}
+	else
+	{
+		state = STATE_ON;
+		seconds_since_run = 0;
+		GPIO_SetBits(RELAY_PORT, RELAY_PIN);
+	}
+}
+
 static void run_freezer(uint32_t current, uint32_t target)
 {
-	if (running && current > target - HYSTERESIS)
-		return; // leave it running
-
-	if (!running && current < target + HYSTERESIS)
-		return; // stay off till we get a bit warmer
-
-	int on = current > target;
-
-	if (!on || (!running && seconds_since_run < MIN_DELAY))
+	switch (state)
 	{
-		GPIO_ResetBits(RELAY_PORT, RELAY_PIN);	
-		running = 0;
-		return;
-	}
+		case STATE_OFF:
+			GPIO_ResetBits(RELAY_PORT, RELAY_PIN);
+			if (current > target + HYSTERESIS)
+			{
+				turn_on();
+			}
+			else if (current > target)
+			{
+				state = STATE_HYSTERESIS;
+			}
+			break;
 
-	running = 1;
-	seconds_since_run = 0;
-	GPIO_SetBits(RELAY_PORT, RELAY_PIN);	
+		case STATE_WAITING:
+			if (current < target + HYSTERESIS)
+			{
+				state = STATE_OFF;
+			}
+			else
+			{
+				turn_on();
+			}
+			break;
+
+		case STATE_HYSTERESIS:
+			if (current <= target) state = STATE_OFF;
+			if (current > target + HYSTERESIS)
+			{
+				turn_on();
+			}
+			break;
+
+		case STATE_ON:
+			run_time++;
+			seconds_since_run = 0;
+			GPIO_SetBits(RELAY_PORT, RELAY_PIN);
+			if (current < target - HYSTERESIS)
+			{
+				state = STATE_OFF;
+				GPIO_ResetBits(RELAY_PORT, RELAY_PIN);
+			}
+			break;
+	}
 }
 
 void vTaskTempControl( void *pvParameters )

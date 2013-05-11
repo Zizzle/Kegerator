@@ -270,6 +270,7 @@ static void lcd_port_init(void)
 
     GPIO_Init(GPIOE,&GPIO_InitStructure);
 
+
     /* FSMC_D13 ~ FSMC_D15   PD8 ~ PD10 */
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9 | GPIO_Pin_10;
     GPIO_Init(GPIOD,&GPIO_InitStructure);
@@ -709,9 +710,9 @@ void lcd_text_xy(uint16_t Xpos, uint16_t Ypos, const char *str,uint16_t Color, u
     LCD_UNLOCK;
 }
 
-void lcd_text(uint8_t col, uint8_t row, const char *text)
+void lcd_text(uint8_t col, uint8_t row, uint16_t color, const char *text)
 {
-    lcd_text_xy(col * 8, row * 16, text, 0xFFFF, bg_col);
+    lcd_text_xy(col * 8, row * 16, text, color, bg_col);
 }
 
 void lcd_fill(uint16_t xx, uint16_t yy, uint16_t ww, uint16_t hh, uint16_t color)
@@ -730,7 +731,7 @@ void lcd_fill(uint16_t xx, uint16_t yy, uint16_t ww, uint16_t hh, uint16_t color
 }
 
 #include <stdarg.h>
-void lcd_printf(uint8_t col, uint8_t row, uint8_t ww, const char *fmt, ...)
+void lcd_printf(uint8_t col, uint8_t row, uint8_t ww, uint16_t color, const char *fmt, ...)
 {
     LCD_LOCK;
     char message[31];
@@ -745,7 +746,7 @@ void lcd_printf(uint8_t col, uint8_t row, uint8_t ww, const char *fmt, ...)
     }
     message[len] = 0;
     
-    lcd_text(col, row, message);
+    lcd_text(col, row, color, message);
 
     LCD_UNLOCK;
 }

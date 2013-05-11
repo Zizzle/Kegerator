@@ -148,7 +148,7 @@ static void menu_update(void)
         strcat(crumbs, g_menu[ii-1][g_crumbs[ii-1]].text);
     }
     lcd_fill(0, 0, LCD_W, CRUMB_H, 0x0);
-    lcd_text(0, 0, crumbs);
+    lcd_text(0, 0, 0xFFFF, crumbs);
 	lcd_fill(0, CRUMB_H - 2, LCD_W, 2, 0xFFFF);
 
     // how big is the menu?

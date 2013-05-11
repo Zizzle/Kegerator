@@ -18,6 +18,7 @@
 #include "lcd.h"
 #include "stm32f10x.h"
 #include "settings.h"
+#include "temp_control.h"
 
 unsigned char in_menu = 0;
 
@@ -145,7 +146,7 @@ void target_temp_display(int init)
 	if (init)
 	{
 		lcd_fill(200, 0, 120, 16, 0);
-		lcd_printf(26, 0, 20, "target %d.%d", temp_get_target() / 100, temp_get_target() % 100);	
+		lcd_printf(26, 0, 20, 0xFFFF, "target %d.%d", temp_get_target() / 100, temp_get_target() % 100);	
 	}
 	else
 	{
@@ -227,7 +228,7 @@ void display_keg(int yy, int index)
     lcd_fill(ww, yy, 320-ww, 50, 0x0);    
 #endif
 
-    lcd_printf(5, 1+ yy / 16, 0, "%d pints left", 48 * ww / LCD_W);
+    lcd_printf(5, 1+ yy / 16, 0, 0xFFFF, "%d pints left", 48 * ww / LCD_W);
     //lcd_printf(5,2 + yy / 16, 0, "%d", adc );
 
 }
@@ -241,6 +242,17 @@ void vKegTask( void *pvParameters )
     {
 		if (!in_menu)
 		{
+			uint16_t color = 0xFFFF;
+			char c = "?";
+	
+			switch (temp_get_state())
+			{
+				case STATE_OFF:        color = 0xFFFF; c = ' '; break;
+				case STATE_ON:         color = 0x0FF0; c = 'O'; break;
+				case STATE_WAITING:    color = 0xFF00; c = 'W'; break;
+				case STATE_HYSTERESIS: color = 0x00FF; c = 'H'; break;		
+			}
+
 			lcd_lock();
 			display_off();
 			vTaskDelay(10);
@@ -249,7 +261,7 @@ void vKegTask( void *pvParameters )
 			display_keg(60,  1);
 			display_keg(120, 2);
 			display_keg(180, 3);
-			lcd_printf(29,1, 8, "%d.%dC", ds1820_get_temp() / 100, ds1820_get_temp() % 100);
+			lcd_printf(29,1, 8, color, "%d.%dC %c", ds1820_get_temp() / 100, ds1820_get_temp() % 100, c);
 			display_on();
 			lcd_release();
 		}
