@@ -8,7 +8,7 @@
 #include "settings.h"
 
 #define MIN_DELAY 600
-#define HYSTERESIS 500
+#define HYSTERESIS 50
 
 #define RELAY_PORT GPIOC      // E
 #define RELAY_PIN GPIO_Pin_7 // 4
